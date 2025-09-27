@@ -1,49 +1,34 @@
 //
 //  main.cpp
-//  Big Booty
+//  Redull Tracker
 //
 //  Created by Elijah Busse on 9/27/25.
 //
 
 #include <iostream>
-#include <string>
-#include <cstring>
 
 using namespace std;
 
-void hasabooty(string);
-
 int main() {
-    
-    
-    string name;
+   
+    int bulls = 0, bullsTotal = 0;
     
     while(true){
         
-        cout << "Provide thine name: ";
+        cout << "How many redbulls have you had? ";
+        cin >> bulls;
+        bullsTotal += bulls;
+        cout << bullsTotal << " redbulls, is not enough, drink more." << endl;
         
-        getline(cin, name);
         
-        hasabooty(name);
+        
+        
         
     }
-   
-      
     
     
+    
+    
+    
+    return 0;
 }
-
-void hasabooty(string name){
-    
-    if(name != "lev"){
-        
-        cout << name << " has been positively blessed with a dumper." << endl;
-        
-    }else{
-        
-        cout << "fuck u lev" << endl;
-        
-    }
-    
-    
-};
