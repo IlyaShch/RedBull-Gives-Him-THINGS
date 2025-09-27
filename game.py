@@ -1,9 +1,11 @@
 import pygame
-import GameState
-import Player
-import Enemy
-import Collectible
+import gamestate
+import player
+import enemy
+import collectible
+import tilemap
 import sys
+import math
 
 # Constants
 SCREEN_WIDTH = 1200
@@ -31,6 +33,9 @@ class Game:
         self.font = pygame.font.Font(None, 36)       # Big font for score
         self.small_font = pygame.font.Font(None, 24) # Smaller font for health
 
+        #add the map class
+        self.tilemap = TileMap(tile_size=48)
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -49,6 +54,64 @@ class Game:
         for collectible in self.collectibles:
             collectible.update(dt)
         
+        for wall in self.tilemap.walls:
+            if self.player.get_rect().colliderect(wall):
+                # Compute overlap on each side
+                dx_left   = self.player.rect.right - wall.left
+                dx_right  = wall.right - self.player.rect.left
+                dy_top    = self.player.rect.bottom - wall.top
+                dy_bottom = wall.bottom - self.player.rect.top
+
+                # Pick the smallest overlap (shallowest penetration)
+                min_overlap = min(dx_left, dx_right, dy_top, dy_bottom)
+
+                if min_overlap == dx_left:
+                    self.player.rect.right = wall.left
+                elif min_overlap == dx_right:
+                    self.player.rect.left = wall.right
+                elif min_overlap == dy_top:
+                    self.player.rect.bottom = wall.top
+                elif min_overlap == dy_bottom:
+                    self.player.rect.top = wall.bottom
+
+                # Sync player.x, player.y back to the rect center
+                self.player.x, self.player.y = self.player.rect.center
+        for enemy in self.enemies:
+            enemy.update(dt, self.player)
+            # --- enemy vs walls (push out using smallest-overlap side) ---
+
+
+            # erect = enemy.get_rect()
+            # for wall in self.tilemap.walls:
+            #     if erect.colliderect(wall):
+            #         dx_left   = erect.right  - wall.left
+            #         dx_right  = wall.right   - erect.left
+            #         dy_top    = erect.bottom - wall.top
+            #         dy_bottom = wall.bottom  - erect.top
+
+            #         min_overlap = min(dx_left, dx_right, dy_top, dy_bottom)
+
+            #         if min_overlap == dx_left:
+            #             erect.right = wall.left
+            #         elif min_overlap == dx_right:
+            #             erect.left = wall.right
+            #         elif min_overlap == dy_top:
+            #             erect.bottom = wall.top
+            #         else:  # dy_bottom
+            #             erect.top = wall.bottom
+
+            #         # write the corrected position back to the enemy
+            #         enemy.x, enemy.y = erect.center
+            # --- enemy slows down if colliding with wall ---
+            if any(enemy.get_rect().colliderect(wall) for wall in self.tilemap.walls):
+                # optional: reduce speed factor so they crawl while stuck
+                enemy.speed = 25
+            else:
+                enemy.speed = 50  # normal speed
+                for collectible in self.collectibles:
+                    collectible.update(dt)
+        
+        
         self.check_collisions()
 
         self.state.time_left -= dt
@@ -61,6 +124,8 @@ class Game:
         
         # Draw game objects only if not over
         if not self.state.game_over:
+             # --- draw map ---
+            self.tilemap.draw(self.screen)
             self.player.draw(self.screen)
             for enemy in self.enemies:
                 enemy.draw(self.screen)
