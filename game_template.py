@@ -89,33 +89,46 @@ class Collectible:
         self.collected = False
         self.bob_timer = 0
 
+        original_image = pygame.image.load(r"C:\Users\jjand\Downloads\WTFareWeDOing\redbull.png").convert_alpha()
+        width = int(original_image.get_width() * 0.1)
+        height = int(original_image.get_height() * 0.1)
+        self.image = pygame.transform.smoothscale(original_image, (width, height))
+        
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+
     def update(self, dt):
+        # Bobbing animation
         self.bob_timer += dt * 3
+        if not self.collected:
+            bob_offset = math.sin(self.bob_timer) * 5
+            self.rect.centery = self.y + bob_offset
 
     def draw(self, screen):
         if not self.collected:
-            bob_offset = math.sin(self.bob_timer) * 3
-            y_pos = self.y + bob_offset
-            points = [
-                (self.x, y_pos - self.size//2),
-                (self.x + self.size//2, y_pos),
-                (self.x, y_pos + self.size//2),
-                (self.x - self.size//2, y_pos)
-            ]
-            pygame.draw.polygon(screen, self.color, points)
+            screen.blit(self.image, self.rect)
 
     def get_rect(self):
-        return pygame.Rect(self.x - self.size//2, self.y - self.size//2, self.size, self.size)
+        return self.rect
+
+class GameState:
+    def __init__(self):
+        self.score = 0
+        self.level = 1
+        self.game_over = False
+        self.paused = False
 
 class Game:
     def __init__(self):
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        pygame.display.set_caption("Sprite Player Demo")
+        pygame.display.set_caption("Retro 2d Topdown Game")
         self.clock = pygame.time.Clock()
         self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
         self.enemies = [Enemy(100,100), Enemy(1100,100)]
         self.collectibles = [Collectible(400,300), Collectible(800,600)]
         self.running = True
+        self.state = GameState()
+        self.font = pygame.font.Font(None, 36)       # Big font for score
+        self.small_font = pygame.font.Font(None, 24) # Smaller font for health
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -129,6 +142,8 @@ class Game:
             enemy.update(dt, self.player)
         for collectible in self.collectibles:
             collectible.update(dt)
+        
+        self.check_collisions()
 
     def draw(self):
         self.screen.fill(BLACK)
@@ -137,7 +152,68 @@ class Game:
             enemy.draw(self.screen)
         for collectible in self.collectibles:
             collectible.draw(self.screen)
+        
+        self.draw_ui()
+
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        overlay.set_alpha(180)
+        overlay.fill(BLACK)
+
+        if self.state.game_over:
+            self.screen.blit(overlay, (0,0))
+            text = self.font.render("GAME OVER", True, RED)
+            rect = text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+            self.screen.blit(text, rect)
+            score_text = self.font.render(f"Score: {self.state.score}", True, WHITE)
+            score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
+            self.screen.blit(score_text, score_rect)
+        
         pygame.display.flip()
+    
+    def check_collisions(self):
+        player_rect = self.player.get_rect()
+        
+        # Check enemy collisions
+        for enemy in self.enemies[:]:  # Use slice to avoid modification during iteration
+            if player_rect.colliderect(enemy.get_rect()):
+                self.player.health -= 25
+                if self.player.health <= 0:
+                    self.state.game_over = True
+                # Remove enemy after collision (or you could damage it instead)
+                self.enemies.remove(enemy)
+        
+        # Check collectible collisions
+        for collectible in self.collectibles:
+            if not collectible.collected and player_rect.colliderect(collectible.get_rect()):
+                collectible.collected = True
+                self.state.score += 10
+        
+    def draw_ui(self):
+        # --- Health bar ---
+        health_width = 200
+        health_height = 20
+        health_x = 10
+        health_y = 10
+        
+        # Background (empty health)
+        pygame.draw.rect(self.screen, RED, (health_x, health_y, health_width, health_height))
+        
+        # Current health
+        current_health_width = int((self.player.health / self.player.max_health) * health_width)
+        pygame.draw.rect(self.screen, GREEN, (health_x, health_y, current_health_width, health_height))
+        
+        # Border
+        pygame.draw.rect(self.screen, WHITE, (health_x, health_y, health_width, health_height), 2)
+        
+        # Health text
+        health_text = self.small_font.render(f"Health: {self.player.health}/{self.player.max_health}", True, WHITE)
+        self.screen.blit(health_text, (health_x, health_y + health_height + 5))
+        
+        # --- Collectibles/Score ---
+        collected_count = sum(1 for c in self.collectibles if c.collected)
+        total_collectibles = len(self.collectibles)
+        score_text = self.font.render(f"Collectibles: {collected_count}/{total_collectibles}", True, YELLOW)
+        self.screen.blit(score_text, (SCREEN_WIDTH - 250, 10))
 
     def run(self):
         while self.running:
