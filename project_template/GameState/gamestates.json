@@ -1,0 +1,27 @@
+{
+  "name": "GameState",
+  "type": "object",
+  "properties": {
+    "player_name": {
+      "type": "string",
+      "description": "Player's name"
+    },
+    "high_score": {
+      "type": "number",
+      "description": "Highest survival time in seconds"
+    },
+    "total_kills": {
+      "type": "number",
+      "description": "Total enemies defeated across all games"
+    },
+    "games_played": {
+      "type": "number",
+      "description": "Total number of games played"
+    },
+    "favorite_weapon": {
+      "type": "string",
+      "description": "Most used weapon type"
+    }
+  },
+  "required": []
+}
