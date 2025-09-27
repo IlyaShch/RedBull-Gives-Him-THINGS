@@ -22,10 +22,7 @@ class Player:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.speed = 200  # pixels per second
-        self.health = 100
-        self.max_health = 100
-
+        self.speed=200
         # Load sprite image
         img_temp = pygame.image.load(r"C:\Users\jjand\Downloads\WTFareWeDOing\redbull.png").convert_alpha()
         width = int(img_temp.get_width() * 0.5)
@@ -104,8 +101,8 @@ class Collectible:
             self.rect.centery = self.y + bob_offset
 
     def draw(self, screen):
-        if not self.collected:
-            screen.blit(self.image, self.rect)
+        #if not self.collected:
+        screen.blit(self.image, self.rect)
 
     def get_rect(self):
         return self.rect
@@ -116,6 +113,8 @@ class GameState:
         self.level = 1
         self.game_over = False
         self.paused = False
+        self.time_left=10
+        self.high_score = 0
 
 class Game:
     def __init__(self):
@@ -134,6 +133,11 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.running = False
+                if event.key == pygame.K_r and self.state.game_over:
+                    self.restart_game()
 
     def update(self, dt):
         keys = pygame.key.get_pressed()
@@ -145,28 +149,53 @@ class Game:
         
         self.check_collisions()
 
+        self.state.time_left -= dt
+        if self.state.time_left <= 0:
+            self.state.time_left = 0
+            self.state.game_over = True
+
     def draw(self):
         self.screen.fill(BLACK)
-        self.player.draw(self.screen)
-        for enemy in self.enemies:
-            enemy.draw(self.screen)
-        for collectible in self.collectibles:
-            collectible.draw(self.screen)
         
+        # Draw game objects only if not over
+        if not self.state.game_over:
+            self.player.draw(self.screen)
+            for enemy in self.enemies:
+                enemy.draw(self.screen)
+            for collectible in self.collectibles:
+                collectible.draw(self.screen)
+        
+        # Draw UI on top
         self.draw_ui()
-
-        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-        overlay.set_alpha(180)
-        overlay.fill(BLACK)
-
+        
+        # Draw game over overlay
         if self.state.game_over:
-            self.screen.blit(overlay, (0,0))
-            text = self.font.render("GAME OVER", True, RED)
-            rect = text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
-            self.screen.blit(text, rect)
+            if self.state.score > self.state.high_score:
+                self.state.high_score = self.state.score
+            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            overlay.set_alpha(200)  # semi-transparent black
+            overlay.fill(BLACK)
+            self.screen.blit(overlay, (0, 0))
+            
+            # Game over text
+            go_text = self.font.render("GAME OVER", True, RED)
+            go_rect = go_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
+            self.screen.blit(go_text, go_rect)
+            
+            # Current score
             score_text = self.font.render(f"Score: {self.state.score}", True, WHITE)
-            score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
+            score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
             self.screen.blit(score_text, score_rect)
+            
+            # Highest score
+            high_text = self.font.render(f"High Score: {self.state.high_score}", True, YELLOW)
+            high_rect = high_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
+            self.screen.blit(high_text, high_rect)
+            
+            # Restart instructions
+            restart_text = self.small_font.render("Press R to Restart or ESC to Quit", True, WHITE)
+            restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 100))
+            self.screen.blit(restart_text, restart_rect)
         
         pygame.display.flip()
     
@@ -174,46 +203,47 @@ class Game:
         player_rect = self.player.get_rect()
         
         # Check enemy collisions
-        for enemy in self.enemies[:]:  # Use slice to avoid modification during iteration
+        for enemy in self.enemies[:]:
             if player_rect.colliderect(enemy.get_rect()):
-                self.player.health -= 25
-                if self.player.health <= 0:
-                    self.state.game_over = True
-                # Remove enemy after collision (or you could damage it instead)
+                self.state.score -= 5  # <-- subtract 5 for hitting enemy
+                print(f"Hit enemy! Score: {self.state.score}")
                 self.enemies.remove(enemy)
         
         # Check collectible collisions
         for collectible in self.collectibles:
             if not collectible.collected and player_rect.colliderect(collectible.get_rect()):
                 collectible.collected = True
-                self.state.score += 10
-        
+                self.state.score += 10  # <-- add 10 for collectible
+                print(f"Collected! Score: {self.state.score}")
+            
     def draw_ui(self):
-        # --- Health bar ---
-        health_width = 200
-        health_height = 20
-        health_x = 10
-        health_y = 10
+        # --- Score display ---
+        score_text = self.font.render(f"Score: {self.state.score}", True, YELLOW)
+        self.screen.blit(score_text, (10, 10))
         
-        # Background (empty health)
-        pygame.draw.rect(self.screen, RED, (health_x, health_y, health_width, health_height))
-        
-        # Current health
-        current_health_width = int((self.player.health / self.player.max_health) * health_width)
-        pygame.draw.rect(self.screen, GREEN, (health_x, health_y, current_health_width, health_height))
-        
-        # Border
-        pygame.draw.rect(self.screen, WHITE, (health_x, health_y, health_width, health_height), 2)
-        
-        # Health text
-        health_text = self.small_font.render(f"Health: {self.player.health}/{self.player.max_health}", True, WHITE)
-        self.screen.blit(health_text, (health_x, health_y + health_height + 5))
-        
-        # --- Collectibles/Score ---
+        # --- Optional: show collectibles collected ---
         collected_count = sum(1 for c in self.collectibles if c.collected)
         total_collectibles = len(self.collectibles)
-        score_text = self.font.render(f"Collectibles: {collected_count}/{total_collectibles}", True, YELLOW)
-        self.screen.blit(score_text, (SCREEN_WIDTH - 250, 10))
+        coll_text = self.small_font.render(f"Collectibles: {collected_count}/{total_collectibles}", True, WHITE)
+        self.screen.blit(coll_text, (10, 50))
+
+        timer_text = self.font.render(f"Time Left: {int(self.state.time_left)}s", True, CYAN)
+        self.screen.blit(timer_text, (SCREEN_WIDTH - 250, 10))
+        
+    def reset_collectibles(self, index):
+        for i in range(0,len(self.collectibles)):
+            if i!=index:
+                self.collectibles[i].collected=False
+
+    def restart_game(self):
+        self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
+        self.enemies = [Enemy(100, 100), Enemy(1100, 100)]
+        for collectible in self.collectibles:
+            collectible.collected = False
+        self.state.game_over = False
+        self.state.game_won = False
+        self.state.score = 0
+        self.state.time_left = 10
 
     def run(self):
         while self.running:
