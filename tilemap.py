@@ -1,3 +1,19 @@
+import math
+import pygame
+
+# Constants
+SCREEN_WIDTH = 1200
+SCREEN_HEIGHT = 900
+FPS = 60
+
+# Colors (retro palette)
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
+CYAN = (0, 255, 255)
+
 class TileMap:
     def __init__(self, tile_size=48):
         self.tile_size = tile_size

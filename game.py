@@ -1,11 +1,12 @@
-import pygame
-import gamestate
-import player
-import enemy
-import collectible
-import tilemap
 import sys
 import math
+import pygame
+
+from gamestate import GameState
+from player import Player
+from enemy import Enemy
+from collectible import Collectible
+from tilemap import TileMap
 
 # Constants
 SCREEN_WIDTH = 1200

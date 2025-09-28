@@ -4,6 +4,7 @@ import math
 import os
 
 from game import Game
+from tilemap import TileMap
 
 pygame.init()
 
