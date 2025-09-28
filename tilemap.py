@@ -91,11 +91,11 @@ class TileMap:
             pygame.draw.rect(screen, (160,160,175), rect, 2)
 
         for rect in self.doors1:
-            pygame.draw.rect(screen, (0, 0, 0), rect)
+            pygame.draw.rect(screen, (255, 255, 255), rect)
             pygame.draw.rect(screen, (50, 50, 50), rect, 2)
 
         for rect in self.doors2:
-            pygame.draw.rect(screen, (0, 0, 0), rect)
+            pygame.draw.rect(screen, (255, 255, 255), rect)
             pygame.draw.rect(screen, (50, 50, 50), rect, 2)
 
         # dropzones (bright cyan with border)
