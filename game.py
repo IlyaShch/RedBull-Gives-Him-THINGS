@@ -33,6 +33,7 @@ class Game:
         self.state = GameState()
         self.font = pygame.font.Font(None, 36)       # Big font for score
         self.small_font = pygame.font.Font(None, 24) # Smaller font for health
+        self.deactive_collectible_index=-1
 
         #add the map class
         self.tilemap = TileMap(tile_size=48)
@@ -178,10 +179,14 @@ class Game:
                 self.enemies.remove(enemy)
         
         # Check collectible collisions
-        for collectible in self.collectibles:
-            if not collectible.collected and player_rect.colliderect(collectible.get_rect()):
-                collectible.collected = True
+        for i in range(0,len(self.collectibles)):
+            if i!=self.deactive_collectible_index and player_rect.colliderect(self.collectibles[i].get_rect()):
+                self.collectibles[i].collected = True
                 self.state.score += 10  # <-- add 10 for collectible
+                for other in self.collectibles:
+                    #if other!=self.collectibles[i]:
+                    self.collectibles[i].collected=False
+                self.deactive_collectible_index=i
                 print(f"Collected! Score: {self.state.score}")
             
     def draw_ui(self):
