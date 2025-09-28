@@ -10,6 +10,8 @@ from enemy import Enemy
 from collectible import Collectible
 from tilemap import TileMap
 from progressbar import ProgressBar
+from musichandler import MusicHandler
+from dialoguebox import DialogueBox
 
 # Constants
 SCREEN_WIDTH = 1200
@@ -30,7 +32,10 @@ class Game:
         pygame.display.set_caption("Retro 2d Topdown Game")
         self.clock = pygame.time.Clock()
         self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
-        self.enemies = [Enemy(100,100), Enemy(1100,100)]
+        self.enemies = [
+            Enemy(100,100),
+            Enemy(1100, 100, image_path="dog.webp", scale=0.5, dialogue="woof")
+        ]
         self.collectibles = [Collectible(400,300), Collectible(800,600)]
         self.running = True
         self.state = GameState()
@@ -132,11 +137,18 @@ class Game:
         # Start with the first map
         self.tilemap = self.tilemap1
 
+        # Music handler: loop 'casual-panic_X7OnO11p.wav' forever
+        self.music = MusicHandler("casual-panic_X7OnO11p.wav")
+        self.music.play(loops=-1)
+
         # Progress bars
         self.progress_yellow = ProgressBar(10, 80, 300, 24, (255, 255, 0))
         self.progress_blue = ProgressBar(10, 120, 300, 24, (0, 180, 255))
         #self.progress_blue.initial_progress()
         self.progress_blue.fullness = 0.0  # Demo value, you can link to another variable
+        # Dialogue box (hidden by default)
+        self.dialogue_box = DialogueBox(300, 700, 600, 80)
+        self.dialogue_timer = 0  # How long to show dialogue (seconds)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -156,6 +168,8 @@ class Game:
         for collectible in self.collectibles:
             collectible.update(dt)
         
+            self.dialogue_box.update(dt)
+
         for wall in self.tilemap.walls:
             if self.player.get_rect().colliderect(wall):
                 # Compute overlap on each side
@@ -186,8 +200,6 @@ class Game:
                     self.player.x, self.player.y = 100, 100
                     self.player.rect.center = (self.player.x, self.player.y)
                     break
-
-                    # --- NEW: dropzone interaction ---
         # --- NEW: dropzone interaction ---
         for dz in self.tilemap.dropzones:
             if self.player.get_rect().colliderect(dz):
@@ -198,30 +210,7 @@ class Game:
 
         for enemy in self.enemies:
             enemy.update(dt, self.player)
-            # --- enemy vs walls (push out using smallest-overlap side) ---
 
-
-            # erect = enemy.get_rect()
-            # for wall in self.tilemap.walls:
-            #     if erect.colliderect(wall):
-            #         dx_left   = erect.right  - wall.left
-            #         dx_right  = wall.right   - erect.left
-            #         dy_top    = erect.bottom - wall.top
-            #         dy_bottom = wall.bottom  - erect.top
-
-            #         min_overlap = min(dx_left, dx_right, dy_top, dy_bottom)
-
-            #         if min_overlap == dx_left:
-            #             erect.right = wall.left
-            #         elif min_overlap == dx_right:
-            #             erect.left = wall.right
-            #         elif min_overlap == dy_top:
-            #             erect.bottom = wall.top
-            #         else:  # dy_bottom
-            #             erect.top = wall.bottom
-
-            #         # write the corrected position back to the enemy
-            #         enemy.x, enemy.y = erect.center
             # --- enemy slows down if colliding with wall ---
             if any(enemy.get_rect().colliderect(wall) for wall in self.tilemap.walls):
                 # optional: reduce speed factor so they crawl while stuck
@@ -251,10 +240,10 @@ class Game:
 
     def draw(self):
         self.screen.fill(BLACK)
-        
+
         # Draw game objects only if not over
         if not self.state.game_over:
-             # --- draw map ---
+            # --- draw map ---
             self.tilemap.draw(self.screen)
             self.player.draw(self.screen)
             for enemy in self.enemies:
@@ -265,7 +254,11 @@ class Game:
                                 
         # Draw UI on top
         self.draw_ui()
-        
+
+        # Draw dialogue box if text is set (always, even before game over)
+        if self.dialogue_box.text:
+            self.dialogue_box.draw(self.screen)
+
         # Draw game over overlay
         if self.state.game_over:
             if self.state.stash > self.state.high_score:
@@ -274,27 +267,27 @@ class Game:
             overlay.set_alpha(200)  # semi-transparent black
             overlay.fill(BLACK)
             self.screen.blit(overlay, (0, 0))
-            
+
             # Game over text
             go_text = self.font.render("GAME OVER", True, RED)
             go_rect = go_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
             self.screen.blit(go_text, go_rect)
-            
+
             # Current score
             score_text = self.font.render(f"Score: {self.state.stash}", True, WHITE)
             score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
             self.screen.blit(score_text, score_rect)
-            
+
             # Highest score
             high_text = self.font.render(f"High Score: {self.state.high_score}", True, YELLOW)
             high_rect = high_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
             self.screen.blit(high_text, high_rect)
-            
+
             # Restart instructions
             restart_text = self.small_font.render("Press R to Restart or ESC to Quit", True, WHITE)
             restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 100))
             self.screen.blit(restart_text, restart_rect)
-        
+
         pygame.display.flip()
     
     def check_collisions(self):
@@ -306,6 +299,10 @@ class Game:
                 if self.state.inventory > 0:
                     self.state.inventory =0
                 print(f"Hit enemy! Inventory: {self.state.inventory}")
+                # Show dialogue box with enemy's dialogue
+                if hasattr(enemy, 'dialogue') and enemy.dialogue:
+                    self.dialogue_box.set_text(enemy.dialogue)
+                    self.dialogue_timer = 2.5  # Show for 2.5 seconds
                 self.enemies.remove(enemy)
 
         # --- Collectible collisions ---
@@ -328,6 +325,9 @@ class Game:
         # --- Score display ---
         score_text = self.font.render(f"Stash Size: {self.state.stash}", True, YELLOW)
         self.screen.blit(score_text, (10, 10))
+
+        # dialgoue box
+        self.dialogue_box.draw(self.screen)
 
         # --- Inventory display ---
         inventory_text = self.font.render(f"Inventory: {self.state.inventory}", True, RED)
@@ -355,7 +355,10 @@ class Game:
 
     def restart_game(self):
         self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
-        self.enemies = [Enemy(100, 100), Enemy(1100, 100)]
+        self.enemies = [
+            Enemy(100, 100),
+            Enemy(1100, 100, image_path="dog.webp", scale=0.5, dialogue="woof")
+        ]
         for collectible in self.collectibles:
             collectible.collected = False
         self.state.game_over = False
