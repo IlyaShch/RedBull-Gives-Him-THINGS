@@ -10,6 +10,7 @@ from enemy import Enemy
 from collectible import Collectible
 from tilemap import TileMap
 from progressbar import ProgressBar
+from musichandler import MusicHandler
 
 # Constants
 SCREEN_WIDTH = 1200
@@ -32,8 +33,8 @@ class Game:
         self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
         self.enemies = [
             Enemy(100,100),
-            Enemy(1100, 100, image_path="dog.webp", scale=0.5, dialogue="woof"),
-            Enemy(400, 400, image_paths=["enemy_walk1.png", "enemy_walk2.png", "enemy_walk3.png"], scale=0.5, anim_speed=2.0)
+            Enemy(1100, 100, image_paths=["dog.webp", "dog.webp"], scale=0.5, dialogue="woof", anim_speed=0.1),
+            Enemy(400, 400, image_paths=["coder1.png", "coder2.png"], scale=0.5, anim_speed=0.1)
         ]
         self.collectibles = [Collectible(400,300), Collectible(800,600)]
         self.running = True

@@ -60,7 +60,10 @@ class Enemy:
 
 
     def draw(self, screen):
-        if self.image:
+        if self.frames:
+            # Use animated frames
+            screen.blit(self.frames[self.current_frame], self.rect)
+        elif self.image:
             screen.blit(self.image, self.rect)
         else:
             pygame.draw.rect(screen, self.color, (self.x-8, self.y-8, 16, 16))
