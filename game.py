@@ -1,6 +1,8 @@
 import sys
 import math
 import pygame
+import random
+
 
 from gamestate import GameState
 from player import Player
@@ -151,7 +153,7 @@ class Game:
             for collectible in self.collectibles:
                 if not collectible.collected:
                     collectible.draw(self.screen)
-                    
+                                
         # Draw UI on top
         self.draw_ui()
         
@@ -193,21 +195,23 @@ class Game:
         for enemy in self.enemies[:]:
             if player_rect.colliderect(enemy.get_rect()):
                 if self.state.inventory > 0:
-                    self.state.inventory -= 1
+                    self.state.inventory =0
                 print(f"Hit enemy! Inventory: {self.state.inventory}")
                 self.enemies.remove(enemy)
 
         # --- Collectible collisions ---
-        for i, collectible in enumerate(self.collectibles):
+        for collectible in self.collectibles:
             if not collectible.collected and player_rect.colliderect(collectible.get_rect()):
-                self.player.speed = 1.75*self.player.speed
                 collectible.collected = True
                 self.state.inventory += 1
-                print(f"Collected! Red Bull: {self.state.inventory}")
-                
+                self.player.speed = 1.25 * self.player.speed  # speed boost on pickup
+                print(f"Collected! Red Bull: {self.state.inventory}, New speed: {self.player.speed}")
+
+
             # --- Reset all collectibles if all collected ---
         if all(c.collected for c in self.collectibles):
             print("All Red Bulls collected! Resetting collectibles...")
+            self.randomize_collectibles()
             for c in self.collectibles:
                 c.collected = False
                 
@@ -248,6 +252,7 @@ class Game:
         self.state.stash = 0
         self.state.inventory =0
         self.state.time_left = 10
+        self.randomize_collectibles()
     
     def clear(self):
         self.player=None
@@ -262,3 +267,20 @@ class Game:
             self.draw()
         pygame.quit()
         sys.exit()
+
+    def randomize_collectibles(self):
+        for collectible in self.collectibles:
+            while True:
+                # Generate random coordinates within screen bounds
+                x = random.randint(collectible.rect.width // 2, SCREEN_WIDTH - collectible.rect.width // 2)
+                y = random.randint(collectible.rect.height // 2, SCREEN_HEIGHT - collectible.rect.height // 2)
+                
+                # Check collision with walls
+                rect = pygame.Rect(x - collectible.rect.width//2, y - collectible.rect.height//2,
+                                collectible.rect.width, collectible.rect.height)
+                if not any(rect.colliderect(wall) for wall in self.tilemap.walls):
+                    # Valid position found
+                    collectible.x = x
+                    collectible.y = y
+                    collectible.rect.center = (x, y)
+                    break
