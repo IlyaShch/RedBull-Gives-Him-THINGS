@@ -122,8 +122,8 @@ class Game:
             "W..W...............W....W",
             "W..W..............W......",
             "W..W..............W......",
-            "W.............W.W.......E",
-            "W........W..............E",
+            "W.............W.W......E.",
+            "W........W.............E.",
             "W........W........W.W...W",
             "W........W..........W...W",
             "W....WWW......WWW.W.W...W",
@@ -212,21 +212,26 @@ class Game:
 
                 # Sync player.x, player.y back to the rect center
                 self.player.x, self.player.y = self.player.rect.center
-        for door_rect in self.tilemap.doors1:
+        for i, door_rect in enumerate(self.tilemap.doors1):
             if self.player.get_rect().colliderect(door_rect):
                 #if self.tilemap.door1:
                 self.tilemap = self.tilemap.door1
                 # Reset player to top-left
-                self.player.x, self.player.y = 100, 100
+                #self.player.x, self.player.y = 100, 100
+                #self.player.rect.center = (self.player.x, self.player.y)
+                #break
+                target_pos = self.tilemap.doors1_targets[i]  # same index
+                self.player.x, self.player.y = target_pos
                 self.player.rect.center = (self.player.x, self.player.y)
                 break
         
-        for door_rect in self.tilemap.doors2:
+        for i, door_rect in enumerate(self.tilemap.doors2):
             if self.player.get_rect().colliderect(door_rect):
                 #if self.tilemap.door1:
                 self.tilemap = self.tilemap.door2
                 # Reset player to top-left
-                self.player.x, self.player.y = 100, 100
+                target_pos = self.tilemap.doors2_targets[i]  # same index
+                self.player.x, self.player.y = target_pos
                 self.player.rect.center = (self.player.x, self.player.y)
                 break
 
@@ -407,6 +412,7 @@ class Game:
         self.randomize_collectibles()
         self.progress_blue.fullness=0
         self.progress_yellow.fullness=1
+        self.tilemap=self.tilemap1
     
     def clear(self):
         self.collectible=[]
@@ -437,3 +443,19 @@ class Game:
                     collectible.y = y
                     collectible.rect.center = (x, y)
                     break
+
+    def get_entry_direction(player_rect, door_rect):
+        dx = (player_rect.centerx) - (door_rect.centerx)
+        dy = (player_rect.centery) - (door_rect.centery)
+
+        # Compare absolute values to see which axis dominates
+        if abs(dx) > abs(dy):
+            if dx > 0:
+                return "right"   # player came from right
+            else:
+                return "left"    # player came from left
+        else:
+            if dy > 0:
+                return "bottom"  # player came from below
+            else:
+                return "top"     # player came from above
