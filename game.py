@@ -168,7 +168,7 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
-                if event.key == pygame.K_r and self.state.game_over:
+                if event.key == pygame.K_r and (self.state.game_over or self.state.win):
                     self.restart_game()
             #if event.type == pygame.USEREVENT + 1:
             #    self.music.play_sound("drink")
@@ -264,12 +264,15 @@ class Game:
                 for collectible in self.collectibles:
                     collectible.update(dt)
         
-        if self.state.game_over==False:
+        if self.state.game_over==False or self.state.win==False:
             self.check_collisions()
 
         #self.state.time_left -= dt
         #if self.state.time_left <= 0:
 
+        if self.progress_blue.fullness>=1:
+            self.state.time_left=0
+            self.state.win=True
 
         if self.progress_yellow.fullness <=0:
             self.state.time_left = 0
@@ -288,7 +291,7 @@ class Game:
         self.screen.fill(BLACK)
         
         # Draw game objects only if not over
-        if not self.state.game_over:
+        if not (self.state.game_over and self.state.win):
              # --- draw map ---
             self.tilemap.draw(self.screen)
             self.player.draw(self.screen)
@@ -313,7 +316,7 @@ class Game:
             self.screen.blit(overlay, (0, 0))
             
             # Game over text
-            go_text = self.font.render("GAME OVER", True, RED)
+            go_text = self.font.render("YOU LOSE", True, RED)
             go_rect = go_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
             self.screen.blit(go_text, go_rect)
             
@@ -332,6 +335,34 @@ class Game:
             restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 100))
             self.screen.blit(restart_text, restart_rect)
         
+        if self.state.win:
+            if self.state.stash > self.state.high_score:
+                self.state.high_score = self.state.stash
+            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            overlay.set_alpha(200)  # semi-transparent black
+            overlay.fill(BLACK)
+            self.screen.blit(overlay, (0, 0))
+            
+            # Game over text
+            go_text = self.font.render("YOU WIN", True, RED)
+            go_rect = go_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
+            self.screen.blit(go_text, go_rect)
+            
+            # Current score
+            score_text = self.font.render(f"Score: {self.state.stash}", True, WHITE)
+            score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+            self.screen.blit(score_text, score_rect)
+            
+            # Highest score
+            high_text = self.font.render(f"High Score: {self.state.high_score}", True, YELLOW)
+            high_rect = high_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
+            self.screen.blit(high_text, high_rect)
+            
+            # Restart instructions
+            restart_text = self.small_font.render("Press R to Restart or ESC to Quit", True, WHITE)
+            restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 100))
+            self.screen.blit(restart_text, restart_rect)
+
         pygame.display.flip()
     
     def check_collisions(self):
