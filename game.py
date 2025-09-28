@@ -35,10 +35,12 @@ class Game:
         self.enemies = [
             Enemy(100,100),
             Enemy(1100, 100, image_paths=["dog.webp", "dog.webp"], scale=0.5, dialogue="woof", anim_speed=0.1),
-            Enemy(400, 400, image_paths=["coder1.png", "coder2.png"], scale=0.5, anim_speed=0.1)
+            Enemy(400, 400, image_paths=["kingjulian.png", "kingjulian.png"], scale=2.5, anim_speed=0.1),
+            Enemy(300, 300, image_paths=["patel.png", "patel.png"], scale=2.5, anim_speed=0.1),
+            Enemy(400, 400, image_paths=["bellas-1.png", "bellas-1.png"], scale=2.5, anim_speed=0.1)
         ]
         self.entities = [
-            Entity(200, 200, image_paths=["coder1.png", "coder2.png"], scale=2.5, dialogue="get me redbull", anim_speed=0.001)
+            Entity(100, 430, image_paths=["coder1.png", "coder2.png"], scale=2.5, dialogue="get me redbull", anim_speed=0.001)
         ]
         self.collectibles = [Collectible(400,300), Collectible(800,600)]
         self.running = True
@@ -263,11 +265,6 @@ class Game:
         #self.state.time_left -= dt
         #if self.state.time_left <= 0:
 
-        if self.progress_yellow.fullness > 1:
-            overflow = self.progress_yellow.fullness - 1
-            # Decay: fast when overflow is large, slow as it approaches 0
-            decay = min(overflow, math.log(overflow + 1) * 0.05 + 0.01)
-            self.progress_yellow.fullness -= decay
 
         if self.progress_yellow.fullness <=0:
             self.state.time_left = 0
