@@ -113,13 +113,14 @@ class Game:
                 for collectible in self.collectibles:
                     collectible.update(dt)
         
-        
-        self.check_collisions()
+        if self.state.time_left>0:
+            self.check_collisions()
 
         self.state.time_left -= dt
         if self.state.time_left <= 0:
             self.state.time_left = 0
             self.state.game_over = True
+            #self.clear()
 
     def draw(self):
         self.screen.fill(BLACK)
@@ -217,6 +218,11 @@ class Game:
         self.state.game_won = False
         self.state.score = 0
         self.state.time_left = 10
+    
+    def clear(self):
+        self.player=None
+        self.collectible=None
+        self.enemies=None
 
     def run(self):
         while self.running:

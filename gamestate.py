@@ -4,5 +4,5 @@ class GameState:
         self.level = 1
         self.game_over = False
         self.paused = False
-        self.time_left=10
+        self.time_left=3
         self.high_score = 0
