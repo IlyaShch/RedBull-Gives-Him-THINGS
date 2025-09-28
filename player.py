@@ -18,7 +18,7 @@ class Player:
         self.y = y
         self.speed=200
         # Load sprite image
-        img_temp = pygame.image.load(r"C:\Users\jjand\Downloads\WTFareWeDOing\redbull.png").convert_alpha()
+        img_temp = pygame.image.load("redbull.png").convert_alpha()
         width = int(img_temp.get_width() * 0.5)
         height = int(img_temp.get_height() * 0.5)
         self.image=pygame.transform.smoothscale(img_temp, (width, height))

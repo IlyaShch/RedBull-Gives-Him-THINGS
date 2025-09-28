@@ -23,7 +23,7 @@ class Collectible:
         self.collected = False
         self.bob_timer = 0
 
-        original_image = pygame.image.load(r"C:\Users\jjand\Downloads\WTFareWeDOing\redbull.png").convert_alpha()
+        original_image = pygame.image.load("redbull.png").convert_alpha()
         width = int(original_image.get_width() * 0.1)
         height = int(original_image.get_height() * 0.1)
         self.image = pygame.transform.smoothscale(original_image, (width, height))
