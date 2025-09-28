@@ -1,2 +1,4 @@
-/umbc_data
-__pycache__/*
+.gitignore
+.gitignore
+.gitignore
+__pycache*

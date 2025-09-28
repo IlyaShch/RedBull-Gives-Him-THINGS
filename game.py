@@ -30,7 +30,11 @@ class Game:
         pygame.display.set_caption("Retro 2d Topdown Game")
         self.clock = pygame.time.Clock()
         self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
-        self.enemies = [Enemy(100,100), Enemy(1100,100)]
+        self.enemies = [
+            Enemy(100,100),
+            Enemy(1100, 100, image_path="dog.webp", scale=0.5, dialogue="woof"),
+            Enemy(400, 400, image_paths=["enemy_walk1.png", "enemy_walk2.png", "enemy_walk3.png"], scale=0.5, anim_speed=2.0)
+        ]
         self.collectibles = [Collectible(400,300), Collectible(800,600)]
         self.running = True
         self.state = GameState()
@@ -137,6 +141,13 @@ class Game:
         # Start with the first map
         self.tilemap = self.tilemap1
 
+        # Music handler: loop 'casual-panic_X7OnO11p.wav' forever
+        self.music = MusicHandler("casual-panic_X7OnO11p.wav")
+        self.music.play(loops=-1)
+        # Load SFX for dropzone
+       # self.music.load_sound("drink", "drink.wav")
+        self.music.load_sound("pop", "popppp.wav")
+
         # Progress bars
         self.progress_yellow = ProgressBar(10, 80, 300, 24, (255, 255, 0))
         self.progress_blue = ProgressBar(10, 120, 300, 24, (0, 180, 255))
@@ -152,6 +163,8 @@ class Game:
                     self.running = False
                 if event.key == pygame.K_r and self.state.game_over:
                     self.restart_game()
+            #if event.type == pygame.USEREVENT + 1:
+            #    self.music.play_sound("drink")
 
     def update(self, dt):
         if self.player is None:
@@ -215,9 +228,14 @@ class Game:
                 if self.state.inventory > 0:
                     print(f"Dropped off {self.state.inventory} Red Bulls!")
                     self.state.stash += self.state.inventory  # bank them
-                    #self.state.inventory = 0                  # clear carried items
-                    self.progress_yellow.fullness=self.progress_yellow.fullness+0.1*self.state.inventory
-                    self.state.inventory = 0 
+                    self.progress_yellow.fullness += (0.2 * self.state.inventory)
+                    self.state.inventory = 0
+                    # Play two SFX in sequence
+                    self.music.play_sound("pop")
+                    # Schedule the second sound to play after the first finishes
+                   #  pop_length = self.music.sounds["pop"].get_length()
+                    # pygame.time.set_timer(pygame.USEREVENT + 1, int(pop_length * 1000), loops=1)
+        
 
         for enemy in self.enemies:
             enemy.update(dt, self.player)
