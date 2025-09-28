@@ -167,7 +167,6 @@ class Game:
             enemy.update(dt, self.player)
         for collectible in self.collectibles:
             collectible.update(dt)
-        
             self.dialogue_box.update(dt)
 
         for wall in self.tilemap.walls:
@@ -206,7 +205,9 @@ class Game:
                 if self.state.inventory > 0:
                     print(f"Dropped off {self.state.inventory} Red Bulls!")
                     self.state.stash += self.state.inventory  # bank them
-                    self.state.inventory = 0                  # clear carried items
+                    self.progress_yellow.fullness += (0.5 * self.state.inventory)
+                    self.state.inventory = 0 
+                    
 
         for enemy in self.enemies:
             enemy.update(dt, self.player)
@@ -220,7 +221,7 @@ class Game:
                 for collectible in self.collectibles:
                     collectible.update(dt)
         
-        if self.state.time_left>0:
+        if self.state.game_over == False:
             self.check_collisions()
 
         self.state.time_left -= dt
@@ -335,12 +336,18 @@ class Game:
 
         # --- Progress bars ---
         time_fullness = max(0.0, min(1.0, self.state.time_left / 10))  # assuming 10s max
-        self.progress_yellow.subtract_fullness(0.001)
+        if self.progress_yellow.fullness > 1:
+            overflow = self.progress_yellow.fullness - 1
+             # Decay: fast when overflow is large, slow as it approaches 0
+            decay = min(overflow, math.log(overflow + 1) * 0.05 + 0.001)
+            self.progress_yellow.fullness -= decay
+        else:
+            self.progress_yellow.subtract_fullness(0.001)
         self.progress_yellow.draw(self.screen)
 
         # Blue bar: demo, decrease over time for now
         #self.progress_blue.fullness = min(1, self.progress_blue.fullness + 0.002)
-        self.progress_blue.add_fullness(0.001)
+        self.progress_blue.add_fullness(0.0001 * self.state.stash + .00005)
         #self.progress_blue.set_fullness(self.progress_blue.fullness)
         self.progress_blue.draw(self.screen)
 

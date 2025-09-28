@@ -11,7 +11,7 @@ class Player:
 
         # Load and scale player sprite smaller
         img_temp = pygame.image.load("redbull.png").convert_alpha()
-        scale_factor = 0.3  # reduce to 30% of original size
+        scale_factor = 0.12  # reduce to 30% of original size
         width = int(img_temp.get_width() * scale_factor)
         height = int(img_temp.get_height() * scale_factor)
         self.image = pygame.transform.smoothscale(img_temp, (width, height))
