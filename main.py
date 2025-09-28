@@ -1,3 +1,115 @@
+def render_multiline_text(text, font, color, center, surface, line_spacing=8):
+    # Helper to render multiline text centered
+    lines = []
+    words = text.split()
+    max_width = 900
+    while words:
+        line_words = []
+        while words:
+            line_words.append(words.pop(0))
+            test_line = ' '.join(line_words + words[:1])
+            if font.size(test_line)[0] > max_width:
+                break
+        lines.append(' '.join(line_words))
+    total_height = sum([font.size(line)[1] for line in lines]) + (len(lines)-1)*line_spacing
+    y = center[1] - total_height//2
+    for line in lines:
+        rendered = font.render(line, True, color)
+        rect = rendered.get_rect(center=(center[0], y + rendered.get_height()//2))
+        surface.blit(rendered, rect)
+        y += rendered.get_height() + line_spacing
+def play_intro_sequence(screen, clock):
+    # Load Jimmy frames (use first frame for intro)
+    jimmy_img = pygame.image.load("Jimmy1.png").convert_alpha()
+    jimmy_img = pygame.transform.scale(jimmy_img, (int(jimmy_img.get_width()*3.5), int(jimmy_img.get_height()*3.5)))
+    brother_img = pygame.image.load("coder1.png").convert_alpha()
+    brother_img = pygame.transform.scale(brother_img, (int(brother_img.get_width()*5.5), int(brother_img.get_height()*5.5)))
+
+    # Fade in Jimmy
+    fade_surface = pygame.Surface((1200, 900), pygame.SRCALPHA)
+    alpha = 0
+    fade_in_speed = 2  # slower fade in
+    while alpha < 255:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+        screen.fill((0,0,0))
+        fade_surface.fill((0,0,0,0))
+        jimmy_img.set_alpha(alpha)
+        fade_surface.blit(jimmy_img, jimmy_img.get_rect(center=(400, 500)))
+        screen.blit(fade_surface, (0,0))
+        pygame.display.flip()
+        alpha = min(255, alpha + fade_in_speed)
+        clock.tick(60)
+
+    # Show Jimmy's speech
+    font = pygame.font.Font(None, 54)
+    jimmy_text = "I really want to win a HackUMBC. Brother Help!"
+    skip = False
+    for _ in range(180):  # show Jimmy's speech longer
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                skip = True
+        screen.fill((0,0,0))
+        jimmy_img.set_alpha(255)
+        screen.blit(jimmy_img, jimmy_img.get_rect(center=(400, 500)))
+        render_multiline_text(jimmy_text, font, (255,255,255), (600, 200), screen)
+        pygame.display.flip()
+        clock.tick(60)
+        if skip:
+            break
+
+    # Fade in brother
+    alpha = 0
+    while alpha < 255:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+        screen.fill((0,0,0))
+        jimmy_img.set_alpha(255)
+        brother_img.set_alpha(alpha)
+        screen.blit(jimmy_img, jimmy_img.get_rect(center=(400, 500)))
+        screen.blit(brother_img, brother_img.get_rect(center=(800, 500)))
+        pygame.display.flip()
+        alpha = min(255, alpha + fade_in_speed)
+        clock.tick(60)
+
+    # Show brother's speech
+    brother_text = "I can win this for you, but I need you to bring me as many redbulls as you can to fuel me."
+    skip = False
+    for _ in range(240):  # show brother's speech longer
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                skip = True
+        screen.fill((0,0,0))
+        screen.blit(jimmy_img, jimmy_img.get_rect(center=(400, 500)))
+        screen.blit(brother_img, brother_img.get_rect(center=(800, 500)))
+        render_multiline_text(brother_text, font, (255,255,0), (600, 300), screen)
+        pygame.display.flip()
+        clock.tick(60)
+        if skip:
+            break
+
+    # Fade out to menu
+    for alpha in range(0, 256, 4):  # slower fade out
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+        overlay = pygame.Surface((1200, 900))
+        overlay.set_alpha(alpha)
+        overlay.fill((0,0,0))
+        screen.blit(overlay, (0,0))
+        pygame.display.flip()
+        clock.tick(60)
 
 import pygame
 import sys
@@ -13,8 +125,12 @@ pygame.init()
 
 
 if __name__ == "__main__":
+
     screen = pygame.display.set_mode((1200, 900))
     clock = pygame.time.Clock()
+
+    # --- Intro Sequence ---
+    play_intro_sequence(screen, clock)
 
     # --- Fade-in Title Screen ---
     title_img = pygame.image.load("Titile.png").convert_alpha()

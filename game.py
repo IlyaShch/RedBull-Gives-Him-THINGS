@@ -27,7 +27,23 @@ YELLOW = (255, 255, 0)
 CYAN = (0, 255, 255)
 
 class Game:
+    def show_instructions(self):
+        self.instructions_active = True
+
+    def hide_instructions(self):
+        self.instructions_active = False
+    def try_update_high_score(self):
+        # Update and save high score if stash is greater
+        if self.state.stash > self.state.high_score:
+            self.state.high_score = self.state.stash
+            self.save_high_score()
     def __init__(self):
+        self.instructions_active = False
+        self.state = GameState()
+
+        self.high_score_file = "highscore.txt"
+        self.load_high_score()
+   
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Retro 2d Topdown Game")
         self.clock = pygame.time.Clock()
@@ -35,16 +51,17 @@ class Game:
         self.enemies = [
             #Enemy(100,100),
             #Enemy(1100, 100, image_paths=["dog.webp", "dog.webp"], scale=0.5, dialogue="woof", anim_speed=0.1),
-            Enemy(400, 400, image_paths=["kingjulian.png", "kingjulian.png"], scale=2.5, anim_speed=0.1),
-            Enemy(300, 300, image_paths=["patel.png", "patel.png"], scale=2.5, anim_speed=0.1),
-            Enemy(400, 400, image_paths=["bellas-1.png", "bellas-1.png"], scale=2.5, anim_speed=0.1)
+            Enemy(400, 400, image_paths=["Julian.png", "Julian.png"], scale=.8, anim_speed=0.1),
+            Enemy(300, 300, image_paths=["Dpatel.png", "Dpatel.png"], scale=.8, anim_speed=0.1),
+            Enemy(400, 400, image_paths=["Bella.png", "Bella.png"], scale=.8, anim_speed=0.1)
         ]
         self.entities = [
-            Entity(100, 430, image_paths=["coder1.png", "coder2.png"], scale=5.5, dialogue="get me redbull", anim_speed=0.001)
+            Entity(100, 430, image_paths=["coder1.png", "coder2.png"], scale=5.5, dialogue="get me redbull", anim_speed=0.001, show_speech=True)
         ]
         self.collectibles = [Collectible(400,300), Collectible(800,600)]
         self.running = True
-        self.state = GameState()
+        self.deadline_seconds = 60  # 2 minutes
+        self.deadline_left = self.deadline_seconds
         self.font = pygame.font.Font(None, 36)       # Big font for score
         self.small_font = pygame.font.Font(None, 24) # Smaller font for health
         self.deactive_collectible_index=-1
@@ -60,7 +77,7 @@ class Game:
             "W........W..WW.........W",
             "W...............WW.W....",
             "WZZ.............W..W....",
-            "WZZ.............WW.W....",
+            "WZZ.............W..W....",
             "........................",
             "..........WW..........WW",
             "......................WW",
@@ -160,6 +177,20 @@ class Game:
         self.progress_blue = ProgressBar(10, 120, 300, 24, (0, 180, 255))
         #self.progress_blue.initial_progress()
         self.progress_blue.fullness = 0.0  # Demo value, you can link to another variable
+    def load_high_score(self):
+        try:
+            with open(self.high_score_file, "r") as f:
+                self.state.high_score = int(f.read().strip())
+        except Exception:
+            self.state.high_score = 0
+
+    def save_high_score(self):
+        try:
+            with open(self.high_score_file, "w") as f:
+                f.write(str(self.state.high_score))
+        except Exception:
+            pass
+
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -175,37 +206,40 @@ class Game:
 
     def update(self, dt):
         keys = pygame.key.get_pressed()
-        self.player.update(dt, keys)
+        self.player.update(dt, keys, self.tilemap.walls)
         for entity in self.entities:
-            entity.anim_speed = self.progress_yellow.fullness * (self.state.stash + .0001)  
-            entity.animate(dt)  # or entity.update(dt, self.player) if you want movement
+            # Coder's animation speed is based only on yellow bar fullness, but faster overall
+            entity.anim_speed = self.progress_yellow.fullness * 2.5
+            entity.animate(dt, yellow_fullness=self.progress_yellow.fullness)
         for enemy in self.enemies:
             enemy.update(dt, self.player)
+
+        # --- Spawn more enemies if less than 2 ---
+        if len(self.enemies) < 2:
+            import random
+            spawn_x = random.randint(100, 1100)
+            spawn_y = random.randint(100, 800)
+            # Pick a random enemy sprite (adjust as needed)
+            enemy_types = [
+                ("Julian.png",),
+                ("Dpatel.png",),
+                ("Bella.png",),
+                ("jabrel.png",),
+                ("jack.png",)
+            ]
+            img = random.choice(enemy_types)[0]
+            self.enemies.append(Enemy(spawn_x, spawn_y, image_paths=[img, img], scale=0.8, anim_speed=0.1))
         for collectible in self.collectibles:
             collectible.update(dt)
-        
-        for wall in self.tilemap.walls:
-            if self.player.get_rect().colliderect(wall):
-                # Compute overlap on each side
-                dx_left   = self.player.rect.right - wall.left
-                dx_right  = wall.right - self.player.rect.left
-                dy_top    = self.player.rect.bottom - wall.top
-                dy_bottom = wall.bottom - self.player.rect.top
 
-                # Pick the smallest overlap (shallowest penetration)
-                min_overlap = min(dx_left, dx_right, dy_top, dy_bottom)
-
-                if min_overlap == dx_left:
-                    self.player.rect.right = wall.left
-                elif min_overlap == dx_right:
-                    self.player.rect.left = wall.right
-                elif min_overlap == dy_top:
-                    self.player.rect.bottom = wall.top
-                elif min_overlap == dy_bottom:
-                    self.player.rect.top = wall.bottom
-
-                # Sync player.x, player.y back to the rect center
-                self.player.x, self.player.y = self.player.rect.center
+        # --- Deadline timer logic ---
+        if not self.state.game_over and not self.state.win:
+            self.deadline_left -= dt
+            if self.deadline_left <= 0:
+                self.deadline_left = 0
+                self.state.game_over = True
+                self.try_update_high_score()
+        # (Collision is now handled in Player.update)
         # for i, door_rect in enumerate(self.tilemap.doors1):
         #     if self.player.get_rect().colliderect(door_rect):
         #         #if self.tilemap.door1:
@@ -265,14 +299,18 @@ class Game:
         #if self.state.time_left <= 0:
 
         if self.progress_blue.fullness>=1:
-            self.state.time_left=0
-            self.state.win=True
-            if self.state.time<self.state.best_time:
-                self.state.best_time=self.state.time
+            self.progress_blue.fullness = 0
+            self.state.stash += 10  # Add 10 to red bull stock
+            # Make coder say a new project line
+            for entity in self.entities:
+                if hasattr(entity, 'show_speech') and entity.show_speech:
+                    entity.current_speech = "Time to start another project!"  # You can randomize this if you want
+                    entity.speech_timer = 0
 
         if self.progress_yellow.fullness <=0:
             self.state.time_left = 0
             self.state.game_over = True
+            self.try_update_high_score()
             #self.clear()
 
     #def load_map(self, map_name):
@@ -285,10 +323,23 @@ class Game:
 
     def draw(self):
         self.screen.fill(BLACK)
-        
+        if getattr(self, 'instructions_active', False):
+            # Only show instructions text
+            font = pygame.font.Font(None, 48)
+            instructions = [
+                "INSTRUCTIONS:",
+                "- Use arrow keys to move, and space to sprint!",
+                "- Collect Red Bulls and deliver them!",
+                "- Avoid the hackUMBC team, keep your energy up!"
+            ]
+            for i, line in enumerate(instructions):
+                text = font.render(line, True, (255,255,255))
+                self.screen.blit(text, (100, 150 + i*60))
+            pygame.display.flip()
+            return
+        # ...existing code for normal draw...
         # Draw game objects only if not over
         if not (self.state.game_over and self.state.win):
-             # --- draw map ---
             self.tilemap.draw(self.screen)
             self.player.draw(self.screen)
             for enemy in self.enemies:
@@ -298,14 +349,9 @@ class Game:
                     collectible.draw(self.screen)
             for entity in self.entities:
                 entity.draw(self.screen)
-                                
-        # Draw UI on top
         self.draw_ui()
-        
-        # Draw game over overlay using Menu
         if self.state.game_over:
             from Menu import Menu
-            # Use the same background and coder frames as main menu
             title_img = pygame.image.load("Titile.png").convert_alpha()
             scale_factor = 8.5
             w, h = title_img.get_width(), title_img.get_height()
@@ -317,8 +363,23 @@ class Game:
             coder1 = pygame.transform.scale(coder1, (int(coder1.get_width()*coder_scale), int(coder1.get_height()*coder_scale)))
             coder2 = pygame.transform.scale(coder2, (int(coder2.get_width()*coder_scale), int(coder2.get_height()*coder_scale)))
             coder_frames = [coder1, coder2]
-            # Show menu with high score and restart/quit
-            menu = Menu(self.screen, "", [f"High Score: {self.state.high_score}", "Restart", "Quit"], background_img=scaled_img, background_rect=img_rect, coder_frames=coder_frames)
+            import main as main_module
+            menu = Menu(
+                self.screen,
+                "",
+                [
+                    f"Your Score: {self.state.stash}",
+                    f"High Score: {self.state.high_score}",
+                    "Restart",
+                    "what?",
+                    "Quit"
+                ],
+                background_img=scaled_img,
+                background_rect=img_rect,
+                coder_frames=coder_frames,
+                jimmy_frames=self.player.jimmy_frames
+            )
+            menu.selected_index = 2  # Set 'Restart' as default selected
             menu.draw()
             pygame.display.flip()
             waiting = True
@@ -332,14 +393,17 @@ class Game:
                         self.restart_game()
                         waiting = False
                         break
+                    elif result == "what?":
+                        # Play intro sequence, then return to menu
+                        main_module.play_intro_sequence(self.screen, self.clock)
+                        menu.draw()
+                        pygame.display.flip()
                     elif result == "Quit":
                         pygame.quit()
                         sys.exit()
                 menu.draw()
                 pygame.display.flip()
                 self.clock.tick(FPS)
-
-
         pygame.display.flip()
     
     def check_collisions(self):
@@ -351,16 +415,20 @@ class Game:
                 if player_rect.colliderect(enemy.get_rect()):
                     if self.state.inventory > 0:
                         self.state.inventory =0
+                    # Remove 10% of yellow bar on enemy collision
+                    self.progress_yellow.fullness = max(0, self.progress_yellow.fullness - 0.1)
                     print(f"Hit enemy! Inventory: {self.state.inventory}")
                     self.enemies.remove(enemy)
                     print(self.enemies)
         if len(self.enemies)==0:
             self.enemies = [
                 #Enemy(100,100),
-                #Enemy(1100, 100, image_paths=["dog.webp", "dog.webp"], scale=0.5, dialogue="woof", anim_speed=0.1),
-                Enemy(400, 400, image_paths=["kingjulian.png", "kingjulian.png"], scale=2.5, anim_speed=0.1),
-                Enemy(300, 300, image_paths=["patel.png", "patel.png"], scale=2.5, anim_speed=0.1),
-                Enemy(400, 400, image_paths=["bellas-1.png", "bellas-1.png"], scale=2.5, anim_speed=0.1)
+                Enemy(200, 400, image_paths=["jabrel.png", "jabrel.png"], scale=0.8, anim_speed=0.1),
+
+                Enemy(1100, 100, image_paths=["jack.png", "jack.png"], scale=0.8,  anim_speed=0.1),
+                Enemy(400, 400, image_paths=["Julian.png", "Julian.png"], scale=.8, anim_speed=0.1),
+                Enemy(300, 300, image_paths=["Dpatel.png", "Dpatel.png"], scale=.8, anim_speed=0.1),
+                Enemy(400, 400, image_paths=["Bella.png", "Bella.png"], scale=.8, anim_speed=0.1)
             ]
             self.randomize_enemies()
 
@@ -370,8 +438,8 @@ class Game:
                 if not collectible.collected and player_rect.colliderect(collectible.get_rect()):
                     collectible.collected = True
                     self.state.inventory += 1
-                    #self.player.speed = 1.25 * self.player.speed  # speed boost on pickup
-                    print(f"Collected! Red Bull: {self.state.inventory}, New speed: {self.player.speed}")
+                    # No speed gain from Red Bull pickups
+                    print(f"Collected! Red Bull: {self.state.inventory}")
 
 
             # --- Reset all collectibles if all collected ---
@@ -389,6 +457,14 @@ class Game:
         # --- Inventory display ---
         inventory_text = self.font.render(f"Inventory: {self.state.inventory}", True, RED)
         self.screen.blit(inventory_text, (10, 40))
+
+        # --- Deadline timer display ---
+        mins = int(self.deadline_left) // 60
+        secs = int(self.deadline_left) % 60
+        BRIGHT_RED = (255, 40, 40)
+        deadline_text = self.font.render(f"Deadline: {mins:01d}:{secs:02d}", True, BRIGHT_RED)
+        # Move lower on the screen
+        self.screen.blit(deadline_text, (SCREEN_WIDTH - deadline_text.get_width() - 20, 80))
 
         # --- Progress bars ---
         time_fullness = max(0.0, min(1.0, self.state.time_left / 10))  # assuming 10s max
@@ -420,23 +496,26 @@ class Game:
         self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
         self.enemies = [
                 #Enemy(100,100),
-                #Enemy(1100, 100, image_paths=["dog.webp", "dog.webp"], scale=0.5, dialogue="woof", anim_speed=0.1),
-                Enemy(400, 400, image_paths=["kingjulian.png", "kingjulian.png"], scale=2.5, anim_speed=0.1),
-                Enemy(300, 300, image_paths=["patel.png", "patel.png"], scale=2.5, anim_speed=0.1),
-                Enemy(400, 400, image_paths=["bellas-1.png", "bellas-1.png"], scale=2.5, anim_speed=0.1)
+                Enemy(200, 400, image_paths=["jabrel.png", "jabrel.png"], scale=0.8, anim_speed=0.1),
+                Enemy(1100, 100, image_paths=["jack.png", "jack.png"], scale=0.8, anim_speed=0.1),
+                Enemy(400, 400, image_paths=["Julian.png", "Julian.png"], scale=.8, anim_speed=0.1),
+                Enemy(300, 300, image_paths=["Dpatel.png", "Dpatel.png"], scale=.8, anim_speed=0.1),
+                Enemy(400, 400, image_paths=["Bella.png", "Bella.png"], scale=.8, anim_speed=0.1)
             ]
         for collectible in self.collectibles:
             collectible.collected = False
         self.state.game_over = False
         self.state.game_won = False
         self.state.stash = 0
-        self.state.inventory =0
+        self.state.inventory = 0
         self.state.time_left = 10
         self.randomize_collectibles()
-        self.progress_blue.fullness=0
-        self.progress_yellow.fullness=1
+        self.progress_blue.fullness = 0
+        self.progress_yellow.fullness = 1
         #self.tilemap=self.tilemap1
-        self.state.time=0
+        self.state.time = 0
+        # Reset the deadline timer
+        self.deadline_left = self.deadline_seconds
     
     def clear(self):
         self.collectible=[]
