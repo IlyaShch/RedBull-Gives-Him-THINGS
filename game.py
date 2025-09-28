@@ -140,6 +140,9 @@ class Game:
         # Music handler: loop 'casual-panic_X7OnO11p.wav' forever
         self.music = MusicHandler("casual-panic_X7OnO11p.wav")
         self.music.play(loops=-1)
+        # Load SFX for dropzone
+        self.music.load_sound("drink", "drink.wav")
+        self.music.load_sound("pop", "pop.wav")
 
         # Progress bars
         self.progress_yellow = ProgressBar(10, 80, 300, 24, (255, 255, 0))
@@ -159,6 +162,8 @@ class Game:
                     self.running = False
                 if event.key == pygame.K_r and self.state.game_over:
                     self.restart_game()
+            if event.type == pygame.USEREVENT + 1:
+                self.music.play_sound("drink")
 
     def update(self, dt):
         keys = pygame.key.get_pressed()
@@ -205,9 +210,14 @@ class Game:
                 if self.state.inventory > 0:
                     print(f"Dropped off {self.state.inventory} Red Bulls!")
                     self.state.stash += self.state.inventory  # bank them
-                    self.progress_yellow.fullness += (0.5 * self.state.inventory)
-                    self.state.inventory = 0 
-                    
+                    self.progress_yellow.fullness += (0.2 * self.state.inventory)
+                    self.state.inventory = 0
+                    # Play two SFX in sequence
+                    self.music.play_sound("pop")
+                    # Schedule the second sound to play after the first finishes
+                    pop_length = self.music.sounds["pop"].get_length()
+                    pygame.time.set_timer(pygame.USEREVENT + 1, int(pop_length * 1000), loops=1)
+        
 
         for enemy in self.enemies:
             enemy.update(dt, self.player)

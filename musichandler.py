@@ -1,5 +1,6 @@
 import pygame
 
+
 class MusicHandler:
     def __init__(self, music_file=None, volume=0.5):
         pygame.mixer.init()
@@ -7,6 +8,7 @@ class MusicHandler:
         self.volume = volume
         if music_file:
             self.load(music_file)
+        self.sounds = {}  # For sound effects
 
     def load(self, music_file):
         self.music_file = music_file
@@ -29,3 +31,10 @@ class MusicHandler:
     def set_volume(self, volume):
         self.volume = volume
         pygame.mixer.music.set_volume(volume)
+
+    def load_sound(self, name, file_path):
+        self.sounds[name] = pygame.mixer.Sound(file_path)
+
+    def play_sound(self, name):
+        if name in self.sounds:
+            self.sounds[name].play()
