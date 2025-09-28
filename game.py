@@ -84,6 +84,16 @@ class Game:
 
                 # Sync player.x, player.y back to the rect center
                 self.player.x, self.player.y = self.player.rect.center
+
+                    # --- NEW: dropzone interaction ---
+        # --- NEW: dropzone interaction ---
+        for dz in self.tilemap.dropzones:
+            if self.player.get_rect().colliderect(dz):
+                if self.state.inventory > 0:
+                    print(f"Dropped off {self.state.inventory} Red Bulls!")
+                    self.state.stash += self.state.inventory  # bank them
+                    self.state.inventory = 0                  # clear carried items
+
         for enemy in self.enemies:
             enemy.update(dt, self.player)
             # --- enemy vs walls (push out using smallest-overlap side) ---
@@ -139,8 +149,9 @@ class Game:
             for enemy in self.enemies:
                 enemy.draw(self.screen)
             for collectible in self.collectibles:
-                collectible.draw(self.screen)
-        
+                if not collectible.collected:
+                    collectible.draw(self.screen)
+                    
         # Draw UI on top
         self.draw_ui()
         
@@ -178,51 +189,50 @@ class Game:
     def check_collisions(self):
         player_rect = self.player.get_rect()
         
-        # Check enemy collisions
+        # --- Enemy collisions ---
         for enemy in self.enemies[:]:
             if player_rect.colliderect(enemy.get_rect()):
-                if (self.state.stash>0):
-                    self.state.stash -= 1
-                print(f"Hit enemy! Score: {self.state.stash}")
+                if self.state.inventory > 0:
+                    self.state.inventory -= 1
+                print(f"Hit enemy! Inventory: {self.state.inventory}")
                 self.enemies.remove(enemy)
-        
-        # Check collectible collisions
-        for i in range(0,len(self.collectibles)):
-            if i!=self.deactive_collectible_index and player_rect.colliderect(self.collectibles[i].get_rect()):
-                self.collectibles[i].collected = True
-                self.state.stash += 1  # <-- add 10 for collectible
-                self.player.speed = 0.75*self.player.speed
-                for other in self.collectibles:
-                    #if other!=self.collectibles[i]:
-                    self.collectibles[i].collected=False
-                self.deactive_collectible_index=i
-                print(f"Collected! Red Bull: {self.state.stash}")
-            
+
+        # --- Collectible collisions ---
+        for i, collectible in enumerate(self.collectibles):
+            if not collectible.collected and player_rect.colliderect(collectible.get_rect()):
+                self.player.speed = 1.75*self.player.speed
+                collectible.collected = True
+                self.state.inventory += 1
+                print(f"Collected! Red Bull: {self.state.inventory}")
+                
+            # --- Reset all collectibles if all collected ---
+        if all(c.collected for c in self.collectibles):
+            print("All Red Bulls collected! Resetting collectibles...")
+            for c in self.collectibles:
+                c.collected = False
+                
     def draw_ui(self):
         # --- Score display ---
         score_text = self.font.render(f"Stash Size: {self.state.stash}", True, YELLOW)
         self.screen.blit(score_text, (10, 10))
 
-        # --- Optional: show collectibles collected ---
-        collected_count = sum(1 for c in self.collectibles if c.collected)
-        total_collectibles = len(self.collectibles)
-        #coll_text = self.small_font.render(f"Collectibles: {collected_count}/{total_collectibles}", True, WHITE)
-        #self.screen.blit(coll_text, (10, 50))
+        # --- Inventory display ---
+        inventory_text = self.font.render(f"Inventory: {self.state.inventory}", True, RED)
+        self.screen.blit(inventory_text, (10, 40))
 
         # --- Progress bars ---
-        # Yellow bar: fullness based on time left
         time_fullness = max(0.0, min(1.0, self.state.time_left / 10))  # assuming 10s max
         self.progress_yellow.set_fullness(time_fullness)
         self.progress_yellow.draw(self.screen)
 
-        # Blue bar: demo, decrease over time for now
         self.progress_blue_fullness = max(0.0, self.progress_blue_fullness - 0.002)
         self.progress_blue.set_fullness(self.progress_blue_fullness)
         self.progress_blue.draw(self.screen)
 
         timer_text = self.font.render(f"Time Left: {int(self.state.time_left)}s", True, CYAN)
         self.screen.blit(timer_text, (SCREEN_WIDTH - 250, 10))
-        
+
+            
     def reset_collectibles(self, index):
         for i in range(0,len(self.collectibles)):
             if i!=index:
@@ -236,6 +246,7 @@ class Game:
         self.state.game_over = False
         self.state.game_won = False
         self.state.stash = 0
+        self.state.inventory =0
         self.state.time_left = 10
     
     def clear(self):

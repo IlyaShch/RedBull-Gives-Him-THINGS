@@ -6,3 +6,4 @@ class GameState:
         self.paused = False
         self.time_left=10
         self.high_score = 0
+        self.inventory =0
