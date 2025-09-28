@@ -10,8 +10,6 @@ from enemy import Enemy
 from collectible import Collectible
 from tilemap import TileMap
 from progressbar import ProgressBar
-from musichandler import MusicHandler
-from dialoguebox import DialogueBox
 
 # Constants
 SCREEN_WIDTH = 1200
@@ -34,7 +32,8 @@ class Game:
         self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
         self.enemies = [
             Enemy(100,100),
-            Enemy(1100, 100, image_path="dog.webp", scale=0.5, dialogue="woof")
+            Enemy(1100, 100, image_path="dog.webp", scale=0.5, dialogue="woof"),
+            Enemy(400, 400, image_paths=["enemy_walk1.png", "enemy_walk2.png", "enemy_walk3.png"], scale=0.5, anim_speed=2.0)
         ]
         self.collectibles = [Collectible(400,300), Collectible(800,600)]
         self.running = True
@@ -46,7 +45,7 @@ class Game:
         #add the map class
         self.tilemap1 = TileMap(layout=[
             "WWWWWWWWWWWWWWWWWWWWWWWW",
-            "W....W...........W......",
+            "W....W.....EE....W......",
             "W....W...........W......",
             "W..WWW...........WWW....",
             "W........WWWWW..........",
@@ -68,20 +67,20 @@ class Game:
         self.tilemap2 = TileMap(layout=
             [
             "WWWWWWWWWWWWWWWWWWWWWWWW",
-            "W......WWW.......DD....W",
+            "W..................DD..W",
+            "W......................W",
+            "W......................W",
+            "WE.....................W",
+            "WE........W............W",
+            "W......................W",
             "W......................W",
             "W.............W........W",
-            "W..............W........",
-            "W....WW........W........",
-            "W....W........WW........",
-            "W....W........WW..W.....",
-            "W..........WWW..W..W....",
-            "W..WW...............WW..",
-            "W..WW..................",
-            "W...........W..........W",
-            "W..W........W..........W",
-            "W..W........W..........W",
-            "W..........W.W.........W",
+            "W..WW..................W",
+            "W......................W",
+            "W......................W",
+            "W......................W",
+            "W........W.............W",
+            "W......................W",
             "W......................W",
             "W......................W",
             "WWWWWWWWWWWWWWWWWWWWWWWW"
@@ -104,22 +103,22 @@ class Game:
             "W..W....W......WWW.....W",
             "W...........W........W.W",
             "W...........W..........W",
-            "W.............W........W",
+            "W.............W...EE...W",
             "WWWWWWWWWWWWWWWWWWWWWWWW"
         ], tile_size=48)
 
         self.tilemap4 = TileMap(layout=[
-            "WWWWWWWWWWWWWWWWWWWWWWWW",
-            "W....W.......WW.....W...W",
-            "W....W........W.....W...W",
-            "W..WWW........W....WWW..W",
+            "WWWWWWWWWWWWWWWWWWWWWWWWW",
+            "W............WW.....W...W",
+            "W.............W.....W...W",
+            "W.............W....WWW..W",
             "W..W...............W....W",
             "W..W..............W......",
             "W..W..............W......",
-            "W....WWW......WWW.......W",
-            "W........W..W...........W",
-            "W........W..W.....WWW...W",
-            "W........W..W.....W.W...W",
+            "W.............W.W.......E",
+            "W........W..............E",
+            "W........W........W.W...W",
+            "W........W..........W...W",
             "W....WWW......WWW.W.W...W",
             "W................W.......",
             "W..WWW..WWW........WWW..W",
@@ -129,10 +128,15 @@ class Game:
             "WWWWWWWWWWWWWWWWWWWWWWWWW"
         ], tile_size=48)
 
-        self.tilemap1.add_target(self.tilemap2)
-        self.tilemap2.add_target(self.tilemap3)
-        self.tilemap3.add_target(self.tilemap4)
-        self.tilemap4.add_target(self.tilemap1)
+        self.tilemap1.add_target1(self.tilemap2)
+        self.tilemap2.add_target1(self.tilemap3)
+        self.tilemap3.add_target1(self.tilemap4)
+        self.tilemap4.add_target1(self.tilemap1)
+
+        self.tilemap1.add_target2(self.tilemap4)
+        self.tilemap2.add_target2(self.tilemap1)
+        self.tilemap3.add_target2(self.tilemap2)
+        self.tilemap4.add_target2(self.tilemap3)
 
         # Start with the first map
         self.tilemap = self.tilemap1
@@ -140,15 +144,15 @@ class Game:
         # Music handler: loop 'casual-panic_X7OnO11p.wav' forever
         self.music = MusicHandler("casual-panic_X7OnO11p.wav")
         self.music.play(loops=-1)
+        # Load SFX for dropzone
+       # self.music.load_sound("drink", "drink.wav")
+        self.music.load_sound("pop", "popppp.wav")
 
         # Progress bars
         self.progress_yellow = ProgressBar(10, 80, 300, 24, (255, 255, 0))
         self.progress_blue = ProgressBar(10, 120, 300, 24, (0, 180, 255))
         #self.progress_blue.initial_progress()
         self.progress_blue.fullness = 0.0  # Demo value, you can link to another variable
-        # Dialogue box (hidden by default)
-        self.dialogue_box = DialogueBox(300, 700, 600, 80)
-        self.dialogue_timer = 0  # How long to show dialogue (seconds)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -159,16 +163,23 @@ class Game:
                     self.running = False
                 if event.key == pygame.K_r and self.state.game_over:
                     self.restart_game()
+            #if event.type == pygame.USEREVENT + 1:
+            #    self.music.play_sound("drink")
 
     def update(self, dt):
+        if self.player is None:
+            print("[DEBUG] Player is None")
+        if self.collectibles is None:
+            print("[DEBUG] Collectibles is None")
+        if self.enemies is None:
+            print("[DEBUG] Enemies is None")
         keys = pygame.key.get_pressed()
         self.player.update(dt, keys)
         for enemy in self.enemies:
             enemy.update(dt, self.player)
         for collectible in self.collectibles:
             collectible.update(dt)
-            self.dialogue_box.update(dt)
-
+        
         for wall in self.tilemap.walls:
             if self.player.get_rect().colliderect(wall):
                 # Compute overlap on each side
@@ -191,27 +202,67 @@ class Game:
 
                 # Sync player.x, player.y back to the rect center
                 self.player.x, self.player.y = self.player.rect.center
-        for door_rect in self.tilemap.doors:
+        for door_rect in self.tilemap.doors1:
             if self.player.get_rect().colliderect(door_rect):
-                if self.tilemap.door:
-                    self.tilemap = self.tilemap.door
-                    # Reset player to top-left
-                    self.player.x, self.player.y = 100, 100
-                    self.player.rect.center = (self.player.x, self.player.y)
-                    break
+                #if self.tilemap.door1:
+                self.tilemap = self.tilemap.door1
+                # Reset player to top-left
+                self.player.x, self.player.y = 100, 100
+                self.player.rect.center = (self.player.x, self.player.y)
+                break
+        
+        for door_rect in self.tilemap.doors2:
+            if self.player.get_rect().colliderect(door_rect):
+                #if self.tilemap.door1:
+                self.tilemap = self.tilemap.door2
+                # Reset player to top-left
+                self.player.x, self.player.y = 100, 100
+                self.player.rect.center = (self.player.x, self.player.y)
+                break
+
+
+                    # --- NEW: dropzone interaction ---
         # --- NEW: dropzone interaction ---
         for dz in self.tilemap.dropzones:
             if self.player.get_rect().colliderect(dz):
                 if self.state.inventory > 0:
                     print(f"Dropped off {self.state.inventory} Red Bulls!")
                     self.state.stash += self.state.inventory  # bank them
-                    self.progress_yellow.fullness += (0.5 * self.state.inventory)
-                    self.state.inventory = 0 
-                    
+                    self.progress_yellow.fullness += (0.2 * self.state.inventory)
+                    self.state.inventory = 0
+                    # Play two SFX in sequence
+                    self.music.play_sound("pop")
+                    # Schedule the second sound to play after the first finishes
+                   #  pop_length = self.music.sounds["pop"].get_length()
+                    # pygame.time.set_timer(pygame.USEREVENT + 1, int(pop_length * 1000), loops=1)
+        
 
         for enemy in self.enemies:
             enemy.update(dt, self.player)
+            # --- enemy vs walls (push out using smallest-overlap side) ---
 
+
+            # erect = enemy.get_rect()
+            # for wall in self.tilemap.walls:
+            #     if erect.colliderect(wall):
+            #         dx_left   = erect.right  - wall.left
+            #         dx_right  = wall.right   - erect.left
+            #         dy_top    = erect.bottom - wall.top
+            #         dy_bottom = wall.bottom  - erect.top
+
+            #         min_overlap = min(dx_left, dx_right, dy_top, dy_bottom)
+
+            #         if min_overlap == dx_left:
+            #             erect.right = wall.left
+            #         elif min_overlap == dx_right:
+            #             erect.left = wall.right
+            #         elif min_overlap == dy_top:
+            #             erect.bottom = wall.top
+            #         else:  # dy_bottom
+            #             erect.top = wall.bottom
+
+            #         # write the corrected position back to the enemy
+            #         enemy.x, enemy.y = erect.center
             # --- enemy slows down if colliding with wall ---
             if any(enemy.get_rect().colliderect(wall) for wall in self.tilemap.walls):
                 # optional: reduce speed factor so they crawl while stuck
@@ -221,19 +272,19 @@ class Game:
                 for collectible in self.collectibles:
                     collectible.update(dt)
         
-        if self.state.game_over == False:
+        if self.state.game_over==False:
             self.check_collisions()
 
-        self.state.time_left -= dt
+        #self.state.time_left -= dt
         #if self.state.time_left <= 0:
         if self.progress_yellow.fullness <=0:
             self.state.time_left = 0
             self.state.game_over = True
             #self.clear()
 
-    def load_map(self, map_name):
+    #def load_map(self, map_name):
         # 1. Load new map
-        self.tilemap.load_map(map_name)   # you'll need a load_map method in TileMap
+        #self.tilemap.load_map(map_name)   # you'll need a load_map method in TileMap
 
         # 2. Move player to new position
         #self.player.x, self.player.y = player_pos
@@ -241,10 +292,10 @@ class Game:
 
     def draw(self):
         self.screen.fill(BLACK)
-
+        
         # Draw game objects only if not over
         if not self.state.game_over:
-            # --- draw map ---
+             # --- draw map ---
             self.tilemap.draw(self.screen)
             self.player.draw(self.screen)
             for enemy in self.enemies:
@@ -255,11 +306,7 @@ class Game:
                                 
         # Draw UI on top
         self.draw_ui()
-
-        # Draw dialogue box if text is set (always, even before game over)
-        if self.dialogue_box.text:
-            self.dialogue_box.draw(self.screen)
-
+        
         # Draw game over overlay
         if self.state.game_over:
             if self.state.stash > self.state.high_score:
@@ -268,51 +315,50 @@ class Game:
             overlay.set_alpha(200)  # semi-transparent black
             overlay.fill(BLACK)
             self.screen.blit(overlay, (0, 0))
-
+            
             # Game over text
             go_text = self.font.render("GAME OVER", True, RED)
             go_rect = go_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
             self.screen.blit(go_text, go_rect)
-
+            
             # Current score
             score_text = self.font.render(f"Score: {self.state.stash}", True, WHITE)
             score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
             self.screen.blit(score_text, score_rect)
-
+            
             # Highest score
             high_text = self.font.render(f"High Score: {self.state.high_score}", True, YELLOW)
             high_rect = high_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
             self.screen.blit(high_text, high_rect)
-
+            
             # Restart instructions
             restart_text = self.small_font.render("Press R to Restart or ESC to Quit", True, WHITE)
             restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 100))
             self.screen.blit(restart_text, restart_rect)
-
+        
         pygame.display.flip()
     
     def check_collisions(self):
         player_rect = self.player.get_rect()
         
         # --- Enemy collisions ---
-        for enemy in self.enemies[:]:
-            if player_rect.colliderect(enemy.get_rect()):
-                if self.state.inventory > 0:
-                    self.state.inventory =0
-                print(f"Hit enemy! Inventory: {self.state.inventory}")
-                # Show dialogue box with enemy's dialogue
-                if hasattr(enemy, 'dialogue') and enemy.dialogue:
-                    self.dialogue_box.set_text(enemy.dialogue)
-                    self.dialogue_timer = 2.5  # Show for 2.5 seconds
-                self.enemies.remove(enemy)
+        if len(self.enemies)>0:
+            for enemy in self.enemies[:]:
+                if player_rect.colliderect(enemy.get_rect()):
+                    if self.state.inventory > 0:
+                        self.state.inventory =0
+                    print(f"Hit enemy! Inventory: {self.state.inventory}")
+                    self.enemies.remove(enemy)
+                    print(self.enemies)
 
         # --- Collectible collisions ---
-        for collectible in self.collectibles:
-            if not collectible.collected and player_rect.colliderect(collectible.get_rect()):
-                collectible.collected = True
-                self.state.inventory += 1
-                self.player.speed = 1.25 * self.player.speed  # speed boost on pickup
-                print(f"Collected! Red Bull: {self.state.inventory}, New speed: {self.player.speed}")
+        if len(self.collectibles)>0:
+            for collectible in self.collectibles:
+                if not collectible.collected and player_rect.colliderect(collectible.get_rect()):
+                    collectible.collected = True
+                    self.state.inventory += 1
+                    self.player.speed = 1.25 * self.player.speed  # speed boost on pickup
+                    print(f"Collected! Red Bull: {self.state.inventory}, New speed: {self.player.speed}")
 
 
             # --- Reset all collectibles if all collected ---
@@ -327,27 +373,18 @@ class Game:
         score_text = self.font.render(f"Stash Size: {self.state.stash}", True, YELLOW)
         self.screen.blit(score_text, (10, 10))
 
-        # dialgoue box
-        self.dialogue_box.draw(self.screen)
-
         # --- Inventory display ---
         inventory_text = self.font.render(f"Inventory: {self.state.inventory}", True, RED)
         self.screen.blit(inventory_text, (10, 40))
 
         # --- Progress bars ---
         time_fullness = max(0.0, min(1.0, self.state.time_left / 10))  # assuming 10s max
-        if self.progress_yellow.fullness > 1:
-            overflow = self.progress_yellow.fullness - 1
-             # Decay: fast when overflow is large, slow as it approaches 0
-            decay = min(overflow, math.log(overflow + 1) * 0.05 + 0.001)
-            self.progress_yellow.fullness -= decay
-        else:
-            self.progress_yellow.subtract_fullness(0.001)
+        self.progress_yellow.subtract_fullness(0.001)
         self.progress_yellow.draw(self.screen)
 
         # Blue bar: demo, decrease over time for now
         #self.progress_blue.fullness = min(1, self.progress_blue.fullness + 0.002)
-        self.progress_blue.add_fullness(0.0001 * self.state.stash + .00005)
+        self.progress_blue.add_fullness(0.001)
         #self.progress_blue.set_fullness(self.progress_blue.fullness)
         self.progress_blue.draw(self.screen)
 
@@ -355,17 +392,14 @@ class Game:
         self.screen.blit(timer_text, (SCREEN_WIDTH - 250, 10))
 
             
-    def reset_collectibles(self, index):
-        for i in range(0,len(self.collectibles)):
-            if i!=index:
-                self.collectibles[i].collected=False
+    #def reset_collectibles(self, index):
+    #    for i in range(0,len(self.collectibles)):
+    #        if i!=index:
+    #            self.collectibles[i].collected=False
 
     def restart_game(self):
         self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
-        self.enemies = [
-            Enemy(100, 100),
-            Enemy(1100, 100, image_path="dog.webp", scale=0.5, dialogue="woof")
-        ]
+        self.enemies = [Enemy(100, 100), Enemy(1100, 100)]
         for collectible in self.collectibles:
             collectible.collected = False
         self.state.game_over = False
@@ -378,9 +412,8 @@ class Game:
         self.progress_yellow.fullness=1
     
     def clear(self):
-        self.player=None
-        self.collectible=None
-        self.enemies=None
+        self.collectible=[]
+        self.enemies=[]
 
     def run(self):
         while self.running:

@@ -15,7 +15,7 @@ CYAN = (0, 255, 255)
 
 
 class Enemy:
-    def __init__(self, x, y, image_path=None, scale=1.0, dialogue=""):
+    def __init__(self, x, y, image_paths=None, scale=1.0, dialogue="", anim_speed=1.0):
         self.x = x
         self.y = y
         self.size = 16
@@ -24,12 +24,23 @@ class Enemy:
         self.image = None
         self.rect = None
         self.dialogue = dialogue  # String field for enemy dialogue or label
-        if image_path:
-            img_temp = pygame.image.load(image_path).convert_alpha()
-            width = int(img_temp.get_width() * scale)
-            height = int(img_temp.get_height() * scale)
-            self.image = pygame.transform.smoothscale(img_temp, (width, height))
-            self.rect = self.image.get_rect(center=(self.x, self.y))
+        self.anim_speed = anim_speed
+
+        self.frames = []
+        if image_paths:
+            for path in image_paths:
+                img_temp = pygame.image.load(path).convert_alpha()
+                width = int(img_temp.get_width() * scale)
+                height = int(img_temp.get_height() * scale)
+                frame = pygame.transform.smoothscale(img_temp, (width, height))
+                self.frames.append(frame)
+            self.current_frame = 0
+            self.frame_timer = 0
+            self.frame_duration = 0.15  # seconds per frame (base)
+            self.rect = self.frames[0].get_rect(center=(self.x, self.y))
+        else:
+            self.frames = None
+            self.rect = None
 
     def update(self, dt, player):
         dx = player.x - self.x
@@ -40,6 +51,13 @@ class Enemy:
             self.y += (dy / dist) * self.speed * dt
         if self.image:
             self.rect.center = (self.x, self.y)
+        if self.frames:
+            self.frame_timer += dt * self.anim_speed
+            if self.frame_timer > self.frame_duration:
+                self.frame_timer = 0
+                self.current_frame = (self.current_frame + 1) % len(self.frames)
+            self.rect.center = (self.x, self.y)
+
 
     def draw(self, screen):
         if self.image:
