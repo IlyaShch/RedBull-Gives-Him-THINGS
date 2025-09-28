@@ -39,12 +39,104 @@ class Game:
         self.deactive_collectible_index=-1
 
         #add the map class
-        self.tilemap = TileMap(tile_size=48)
+        self.tilemap1 = TileMap(layout=[
+            "WWWWWWWWWWWWWWWWWWWWWWWW",
+            "W....W...........W......",
+            "W....W...........W......",
+            "W..WWW...........WWW....",
+            "W........WWWWW..........",
+            "W........W...W.........D",
+            "W........W..WW.........D",
+            "W...............WW.W....",
+            "WZZ.............W..W....",
+            "WZZ.............WW.W....",
+            "........................",
+            "......................WW",
+            "......................WW",
+            "......................WW",
+            "......................WW",
+            "......................WW",
+            "......................WW",
+            "......................WW"
+        ], tile_size=48)
+
+        self.tilemap2 = TileMap(layout=
+            [
+            "WWWWWWWWWWWWWWWWWWWWWWWW",
+            "W......WWW.......DD....W",
+            "W......................W",
+            "W.............W........W",
+            "W..............W........",
+            "W....WW........W........",
+            "W....W........WW........",
+            "W....W........WW..W.....",
+            "W..........WWW..W..W....",
+            "W..WW...............WW..",
+            "W..WW..................",
+            "W...........W..........W",
+            "W..W........W..........W",
+            "W..W........W..........W",
+            "W..........W.W.........W",
+            "W......................W",
+            "W......................W",
+            "WWWWWWWWWWWWWWWWWWWWWWWW"
+        ], tile_size=48)
+
+        self.tilemap3 = TileMap(layout=[
+            "WWWWWWWWWWWWWWWWWWWWWWWW",
+            "W.............W........W",
+            "W..WWW.............W...W",
+            "W..W.............W.....W",
+            "W..W........W....W.....W",
+            "W..W.............W.....W",
+            "W..WWW..WW..W.W..WWW...W",
+            "W......................W",
+            "WD..............WW.....W",
+            "WD...W..W......W..W....W",
+            "W....W..W......W..W....W",
+            "W...............WWW....W",
+            "W......................W",
+            "W..W....W......WWW.....W",
+            "W...........W........W.W",
+            "W...........W..........W",
+            "W.............W........W",
+            "WWWWWWWWWWWWWWWWWWWWWWWW"
+        ], tile_size=48)
+
+        self.tilemap4 = TileMap(layout=[
+            "WWWWWWWWWWWWWWWWWWWWWWWW",
+            "W....W.......WW.....W...W",
+            "W....W........W.....W...W",
+            "W..WWW........W....WWW..W",
+            "W..W...............W....W",
+            "W..W..............W......",
+            "W..W..............W......",
+            "W....WWW......WWW.......W",
+            "W........W..W...........W",
+            "W........W..W.....WWW...W",
+            "W........W..W.....W.W...W",
+            "W....WWW......WWW.W.W...W",
+            "W................W.......",
+            "W..WWW..WWW........WWW..W",
+            "W..W........W..........W.",
+            "W..W........W..........W.",
+            "W.................DD.....",
+            "WWWWWWWWWWWWWWWWWWWWWWWWW"
+        ], tile_size=48)
+
+        self.tilemap1.add_target(self.tilemap2)
+        self.tilemap2.add_target(self.tilemap3)
+        self.tilemap3.add_target(self.tilemap4)
+        self.tilemap4.add_target(self.tilemap1)
+
+        # Start with the first map
+        self.tilemap = self.tilemap1
 
         # Progress bars
         self.progress_yellow = ProgressBar(10, 80, 300, 24, (255, 255, 0))
         self.progress_blue = ProgressBar(10, 120, 300, 24, (0, 180, 255))
-        self.progress_blue_fullness = 1.0  # Demo value, you can link to another variable
+        #self.progress_blue.initial_progress()
+        self.progress_blue.fullness = 0.0  # Demo value, you can link to another variable
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -86,6 +178,14 @@ class Game:
 
                 # Sync player.x, player.y back to the rect center
                 self.player.x, self.player.y = self.player.rect.center
+        for door_rect in self.tilemap.doors:
+            if self.player.get_rect().colliderect(door_rect):
+                if self.tilemap.door:
+                    self.tilemap = self.tilemap.door
+                    # Reset player to top-left
+                    self.player.x, self.player.y = 100, 100
+                    self.player.rect.center = (self.player.x, self.player.y)
+                    break
 
                     # --- NEW: dropzone interaction ---
         # --- NEW: dropzone interaction ---
@@ -135,10 +235,19 @@ class Game:
             self.check_collisions()
 
         self.state.time_left -= dt
-        if self.state.time_left <= 0:
+        #if self.state.time_left <= 0:
+        if self.progress_yellow.fullness <=0:
             self.state.time_left = 0
             self.state.game_over = True
             #self.clear()
+
+    def load_map(self, map_name):
+        # 1. Load new map
+        self.tilemap.load_map(map_name)   # you'll need a load_map method in TileMap
+
+        # 2. Move player to new position
+        #self.player.x, self.player.y = player_pos
+        #self.player.rect.center = player_pos
 
     def draw(self):
         self.screen.fill(BLACK)
@@ -226,11 +335,13 @@ class Game:
 
         # --- Progress bars ---
         time_fullness = max(0.0, min(1.0, self.state.time_left / 10))  # assuming 10s max
-        self.progress_yellow.set_fullness(time_fullness)
+        self.progress_yellow.subtract_fullness(0.001)
         self.progress_yellow.draw(self.screen)
 
-        self.progress_blue_fullness = max(0.0, self.progress_blue_fullness - 0.002)
-        self.progress_blue.set_fullness(self.progress_blue_fullness)
+        # Blue bar: demo, decrease over time for now
+        #self.progress_blue.fullness = min(1, self.progress_blue.fullness + 0.002)
+        self.progress_blue.add_fullness(0.001)
+        #self.progress_blue.set_fullness(self.progress_blue.fullness)
         self.progress_blue.draw(self.screen)
 
         timer_text = self.font.render(f"Time Left: {int(self.state.time_left)}s", True, CYAN)
@@ -253,6 +364,8 @@ class Game:
         self.state.inventory =0
         self.state.time_left = 10
         self.randomize_collectibles()
+        self.progress_blue.fullness=0
+        self.progress_yellow.fullness=1
     
     def clear(self):
         self.player=None

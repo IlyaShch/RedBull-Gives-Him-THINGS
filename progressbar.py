@@ -14,6 +14,14 @@ class ProgressBar:
 
     def set_fullness(self, fullness):
         self.fullness = max(0.0, min(1.0, fullness))
+    
+    def add_fullness(self, add):
+        temp = self.fullness+add
+        self.fullness=min(1,temp)
+
+    def subtract_fullness(self, diff):
+        temp = self.fullness-diff
+        self.fullness=max(0,temp)
 
     def draw(self, surface):
         # Draw background

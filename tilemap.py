@@ -14,23 +14,15 @@ GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
 CYAN = (0, 255, 255)
 class TileMap:
-    def __init__(self, tile_size=48):
+    def __init__(self, layout, tile_size=48):
         self.tile_size = tile_size
-        self.layout = [
-            "WWWWWWWWWWWWWWWWWWWWWWWW",
-            "W....W...........W......",
-            "W....W...........W......",
-            "W..WWW...........WWW....",
-            "W........WWWWW..........",
-            "W........W...W..........",
-            "W........W..WW..........",
-            "W...............WW.W....",
-            "WDD.............W..W....",
-            "WDD.............WW.W....",
-        ]
+        # Your current layout here...
+        self.layout = layout
+        self.door=None
 
         self._fit_to_screen()
         self._build_walls()
+        self._build_doors()
 
     def _fit_to_screen(self):
         req_cols = math.ceil(SCREEN_WIDTH  / self.tile_size)
@@ -64,8 +56,18 @@ class TileMap:
                                    self.tile_size, self.tile_size)
                 if ch == 'W':
                     self.walls.append(rect)
-                elif ch == 'D':  # <<< new case for dropzones
+                elif ch == 'Z':  # <<< new case for dropzones
                     self.dropzones.append(rect)
+    
+    def _build_doors(self):
+        self.doors=[]
+        for r, row in enumerate(self.layout):
+            for c, ch in enumerate(row):
+                if ch == 'D':
+                    self.doors.append(
+                        pygame.Rect(c*self.tile_size, r*self.tile_size,
+                                    self.tile_size, self.tile_size)
+                    )
 
     def draw(self, screen):
         # floor tiles
@@ -81,7 +83,14 @@ class TileMap:
             pygame.draw.rect(screen, (85,85,100), rect)
             pygame.draw.rect(screen, (160,160,175), rect, 2)
 
+        for rect in self.doors:
+            pygame.draw.rect(screen, (0, 0, 0), rect)
+            pygame.draw.rect(screen, (50, 50, 50), rect, 2)
+
         # dropzones (bright cyan with border)
         for rect in self.dropzones:
             pygame.draw.rect(screen, (0,200,200), rect)
             pygame.draw.rect(screen, (0,255,255), rect, 2)
+
+    def add_target(self, target_map):
+        self.door=target_map
