@@ -40,7 +40,7 @@ class Game:
             Enemy(400, 400, image_paths=["bellas-1.png", "bellas-1.png"], scale=2.5, anim_speed=0.1)
         ]
         self.entities = [
-            Entity(100, 430, image_paths=["coder1.png", "coder2.png"], scale=2.5, dialogue="get me redbull", anim_speed=0.001)
+            Entity(100, 430, image_paths=["coder1.png", "coder2.png"], scale=5.5, dialogue="get me redbull", anim_speed=0.001)
         ]
         self.collectibles = [Collectible(400,300), Collectible(800,600)]
         self.running = True

@@ -28,7 +28,7 @@ class Entity:
                 img_temp = pygame.image.load(path).convert_alpha()
                 width = int(img_temp.get_width() * scale)
                 height = int(img_temp.get_height() * scale)
-                frame = pygame.transform.smoothscale(img_temp, (width, height))
+                frame = pygame.transform.scale(img_temp, (width, height))
                 self.frames.append(frame)
             self.current_frame = 0
             self.frame_timer = 0
