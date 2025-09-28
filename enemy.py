@@ -1,6 +1,8 @@
 import math
 import pygame
 
+from entity import Entity
+
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 900
 FPS = 60
@@ -14,19 +16,15 @@ YELLOW = (255, 255, 0)
 CYAN = (0, 255, 255)
 
 
-class Enemy:
+class Enemy(Entity):
     def __init__(self, x, y, image_paths=None, scale=1.0, dialogue="", anim_speed=1.0):
-        self.x = x
-        self.y = y
+        super().__init__(x=x, y=y, image_paths=image_paths, scale=scale, dialogue=dialogue, anim_speed=anim_speed)
         self.size = 16
         self.speed = 50
         self.color = RED
-        self.image = None
         self.rect = None
-        self.dialogue = dialogue  # String field for enemy dialogue or label
-        self.anim_speed = anim_speed
 
-        self.frames = []
+       
         if image_paths:
             for path in image_paths:
                 img_temp = pygame.image.load(path).convert_alpha()
@@ -49,26 +47,4 @@ class Enemy:
         if dist > 0:
             self.x += (dx / dist) * self.speed * dt
             self.y += (dy / dist) * self.speed * dt
-        if self.image:
-            self.rect.center = (self.x, self.y)
-        if self.frames:
-            self.frame_timer += dt * self.anim_speed
-            if self.frame_timer > self.frame_duration:
-                self.frame_timer = 0
-                self.current_frame = (self.current_frame + 1) % len(self.frames)
-            self.rect.center = (self.x, self.y)
-
-
-    def draw(self, screen):
-        if self.frames:
-            # Use animated frames
-            screen.blit(self.frames[self.current_frame], self.rect)
-        elif self.image:
-            screen.blit(self.image, self.rect)
-        else:
-            pygame.draw.rect(screen, self.color, (self.x-8, self.y-8, 16, 16))
-
-    def get_rect(self):
-        if self.image:
-            return self.rect
-        return pygame.Rect(self.x-8, self.y-8, 16, 16)
+        super().animate(dt)

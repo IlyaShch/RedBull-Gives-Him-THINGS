@@ -5,6 +5,7 @@ import random
 
 from gamestate import GameState
 from player import Player
+from entity import Entity
 from enemy import Enemy
 from collectible import Collectible
 from tilemap import TileMap
@@ -35,6 +36,9 @@ class Game:
             Enemy(100,100),
             Enemy(1100, 100, image_paths=["dog.webp", "dog.webp"], scale=0.5, dialogue="woof", anim_speed=0.1),
             Enemy(400, 400, image_paths=["coder1.png", "coder2.png"], scale=0.5, anim_speed=0.1)
+        ]
+        self.entities = [
+            Entity(200, 200, image_paths=["coder1.png", "coder2.png"], scale=2.5, dialogue="get me redbull", anim_speed=0.001)
         ]
         self.collectibles = [Collectible(400,300), Collectible(800,600)]
         self.running = True
@@ -176,6 +180,9 @@ class Game:
             print("[DEBUG] Enemies is None")
         keys = pygame.key.get_pressed()
         self.player.update(dt, keys)
+        for entity in self.entities:
+            entity.anim_speed = self.progress_yellow.fullness * (self.state.stash + .0001)  
+            entity.animate(dt)  # or entity.update(dt, self.player) if you want movement
         for enemy in self.enemies:
             enemy.update(dt, self.player)
         for collectible in self.collectibles:
@@ -240,30 +247,7 @@ class Game:
 
         for enemy in self.enemies:
             enemy.update(dt, self.player)
-            # --- enemy vs walls (push out using smallest-overlap side) ---
-
-
-            # erect = enemy.get_rect()
-            # for wall in self.tilemap.walls:
-            #     if erect.colliderect(wall):
-            #         dx_left   = erect.right  - wall.left
-            #         dx_right  = wall.right   - erect.left
-            #         dy_top    = erect.bottom - wall.top
-            #         dy_bottom = wall.bottom  - erect.top
-
-            #         min_overlap = min(dx_left, dx_right, dy_top, dy_bottom)
-
-            #         if min_overlap == dx_left:
-            #             erect.right = wall.left
-            #         elif min_overlap == dx_right:
-            #             erect.left = wall.right
-            #         elif min_overlap == dy_top:
-            #             erect.bottom = wall.top
-            #         else:  # dy_bottom
-            #             erect.top = wall.bottom
-
-            #         # write the corrected position back to the enemy
-            #         enemy.x, enemy.y = erect.center
+ 
             # --- enemy slows down if colliding with wall ---
             if any(enemy.get_rect().colliderect(wall) for wall in self.tilemap.walls):
                 # optional: reduce speed factor so they crawl while stuck
@@ -278,6 +262,13 @@ class Game:
 
         #self.state.time_left -= dt
         #if self.state.time_left <= 0:
+
+        if self.progress_yellow.fullness > 1:
+            overflow = self.progress_yellow.fullness - 1
+            # Decay: fast when overflow is large, slow as it approaches 0
+            decay = min(overflow, math.log(overflow + 1) * 0.05 + 0.01)
+            self.progress_yellow.fullness -= decay
+
         if self.progress_yellow.fullness <=0:
             self.state.time_left = 0
             self.state.game_over = True
@@ -304,6 +295,8 @@ class Game:
             for collectible in self.collectibles:
                 if not collectible.collected:
                     collectible.draw(self.screen)
+            for entity in self.entities:
+                entity.draw(self.screen)
                                 
         # Draw UI on top
         self.draw_ui()
@@ -380,12 +373,18 @@ class Game:
 
         # --- Progress bars ---
         time_fullness = max(0.0, min(1.0, self.state.time_left / 10))  # assuming 10s max
-        self.progress_yellow.subtract_fullness(0.001)
+        if self.progress_yellow.fullness > 1:
+            overflow = self.progress_yellow.fullness - 1
+            # Decay: fast when overflow is large, slow as it approaches 0
+            decay = min(overflow, math.log(overflow + 1) * 0.05 + 0.001)
+            self.progress_yellow.fullness -= decay
+        else:
+            self.progress_yellow.subtract_fullness(0.001)
         self.progress_yellow.draw(self.screen)
 
         # Blue bar: demo, decrease over time for now
         #self.progress_blue.fullness = min(1, self.progress_blue.fullness + 0.002)
-        self.progress_blue.add_fullness(0.001)
+        self.progress_blue.add_fullness(0.0001 * self.state.stash + .00005)
         #self.progress_blue.set_fullness(self.progress_blue.fullness)
         self.progress_blue.draw(self.screen)
 
