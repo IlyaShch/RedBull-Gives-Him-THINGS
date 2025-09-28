@@ -77,19 +77,21 @@ class TileMap:
     
     def _build_doors(self):
         self.doors1=[]
+        self.doors1_targets=[]
         self.doors2=[]
+        self.doors2_targets=[]
         for r, row in enumerate(self.layout):
             for c, ch in enumerate(row):
                 if ch == 'D':
-                    self.doors1.append(
-                        pygame.Rect(c*self.tile_size, r*self.tile_size,
+                    rect=pygame.Rect(c*self.tile_size, r*self.tile_size,
                                     self.tile_size, self.tile_size)
-                    )
+                    self.doors1.append(rect)
+                    self.doors1_targets.append((rect.right + self.tile_size//2, rect.centery))
                 if ch == 'E':
-                    self.doors2.append(
-                        pygame.Rect(c*self.tile_size, r*self.tile_size,
+                    rect=pygame.Rect(c*self.tile_size, r*self.tile_size,
                                     self.tile_size, self.tile_size)
-                    )
+                    self.doors2.append(rect)
+                    self.doors2_targets.append((rect.right + self.tile_size//2, rect.centery))
 
     def draw(self, screen):
         # floor tiles
