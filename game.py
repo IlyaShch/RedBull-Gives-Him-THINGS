@@ -191,7 +191,7 @@ class Game:
             if i!=self.deactive_collectible_index and player_rect.colliderect(self.collectibles[i].get_rect()):
                 self.collectibles[i].collected = True
                 self.state.stash += 1  # <-- add 10 for collectible
-                self.player.speed-=10
+                self.player.speed = 0.75*self.player.speed
                 for other in self.collectibles:
                     #if other!=self.collectibles[i]:
                     self.collectibles[i].collected=False
