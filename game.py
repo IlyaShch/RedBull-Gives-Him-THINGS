@@ -7,6 +7,7 @@ from player import Player
 from enemy import Enemy
 from collectible import Collectible
 from tilemap import TileMap
+from progressbar import ProgressBar
 
 # Constants
 SCREEN_WIDTH = 1200
@@ -37,6 +38,11 @@ class Game:
 
         #add the map class
         self.tilemap = TileMap(tile_size=48)
+
+        # Progress bars
+        self.progress_yellow = ProgressBar(10, 80, 300, 24, (255, 255, 0))
+        self.progress_blue = ProgressBar(10, 120, 300, 24, (0, 180, 255))
+        self.progress_blue_fullness = 1.0  # Demo value, you can link to another variable
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -196,12 +202,23 @@ class Game:
         # --- Score display ---
         score_text = self.font.render(f"Stash Size: {self.state.stash}", True, YELLOW)
         self.screen.blit(score_text, (10, 10))
-        
+
         # --- Optional: show collectibles collected ---
         collected_count = sum(1 for c in self.collectibles if c.collected)
         total_collectibles = len(self.collectibles)
         #coll_text = self.small_font.render(f"Collectibles: {collected_count}/{total_collectibles}", True, WHITE)
         #self.screen.blit(coll_text, (10, 50))
+
+        # --- Progress bars ---
+        # Yellow bar: fullness based on time left
+        time_fullness = max(0.0, min(1.0, self.state.time_left / 10))  # assuming 10s max
+        self.progress_yellow.set_fullness(time_fullness)
+        self.progress_yellow.draw(self.screen)
+
+        # Blue bar: demo, decrease over time for now
+        self.progress_blue_fullness = max(0.0, self.progress_blue_fullness - 0.002)
+        self.progress_blue.set_fullness(self.progress_blue_fullness)
+        self.progress_blue.draw(self.screen)
 
         timer_text = self.font.render(f"Time Left: {int(self.state.time_left)}s", True, CYAN)
         self.screen.blit(timer_text, (SCREEN_WIDTH - 250, 10))
