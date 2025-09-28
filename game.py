@@ -3,13 +3,13 @@ import math
 import pygame
 import random
 
-
 from gamestate import GameState
 from player import Player
 from enemy import Enemy
 from collectible import Collectible
 from tilemap import TileMap
 from progressbar import ProgressBar
+from musichandler import MusicHandler
 from musichandler import MusicHandler
 
 # Constants

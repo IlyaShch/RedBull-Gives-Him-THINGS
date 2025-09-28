@@ -21,6 +21,21 @@ class TileMap:
         self.door1=None
         self.door2=None
 
+        self.tile_textures = {
+            '.': pygame.transform.scale(
+                pygame.image.load("Floor Tile.png").convert_alpha(),
+                (tile_size, tile_size)
+            ),
+            'D': pygame.transform.scale(
+                pygame.image.load("door.png").convert_alpha(),
+                (tile_size, tile_size),  # placeholder wall
+            ),
+            'E': pygame.transform.scale(
+                pygame.image.load("door.png").convert_alpha(),
+                (tile_size, tile_size),  # placeholder wall
+            ),
+        }
+
         self._fit_to_screen()
         self._build_walls()
         self._build_doors()
@@ -79,29 +94,30 @@ class TileMap:
     def draw(self, screen):
         # floor tiles
         for r, row in enumerate(self.layout):
-            for c, _ in enumerate(row):
-                rect = pygame.Rect(c*self.tile_size, r*self.tile_size,
-                                   self.tile_size, self.tile_size)
-                pygame.draw.rect(screen, (30,30,36), rect)
-                pygame.draw.rect(screen, (45,45,52), rect, 1)
+            for c, ch in enumerate(row):
+                x = c * self.tile_size
+                y = r * self.tile_size
+                tile = self.tile_textures.get(ch)
+                if tile:
+                    screen.blit(tile, (x, y))
 
         # walls
         for rect in self.walls:
             pygame.draw.rect(screen, (85,85,100), rect)
             pygame.draw.rect(screen, (160,160,175), rect, 2)
 
-        for rect in self.doors1:
-            pygame.draw.rect(screen, (255, 255, 255), rect)
-            pygame.draw.rect(screen, (50, 50, 50), rect, 2)
+        #for rect in self.doors1:
+        #    pygame.draw.rect(screen, (255, 255, 255), rect)
+        #    pygame.draw.rect(screen, (50, 50, 50), rect, 2)
 
-        for rect in self.doors2:
-            pygame.draw.rect(screen, (255, 255, 255), rect)
-            pygame.draw.rect(screen, (50, 50, 50), rect, 2)
+        #for rect in self.doors2:
+        #    pygame.draw.rect(screen, (255, 255, 255), rect)
+        #    pygame.draw.rect(screen, (50, 50, 50), rect, 2)
 
         # dropzones (bright cyan with border)
-        for rect in self.dropzones:
-            pygame.draw.rect(screen, (0,200,200), rect)
-            pygame.draw.rect(screen, (0,255,255), rect, 2)
+        #for rect in self.dropzones:
+        #    pygame.draw.rect(screen, (0,200,200), rect)
+        #    pygame.draw.rect(screen, (0,255,255), rect, 2)
 
     def add_target1(self, target_map):
         self.door1=target_map
