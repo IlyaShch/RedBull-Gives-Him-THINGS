@@ -140,8 +140,8 @@ class Game:
         
         # Draw game over overlay
         if self.state.game_over:
-            if self.state.score > self.state.high_score:
-                self.state.high_score = self.state.score
+            if self.state.stash > self.state.high_score:
+                self.state.high_score = self.state.stash
             overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
             overlay.set_alpha(200)  # semi-transparent black
             overlay.fill(BLACK)
@@ -153,7 +153,7 @@ class Game:
             self.screen.blit(go_text, go_rect)
             
             # Current score
-            score_text = self.font.render(f"Score: {self.state.score}", True, WHITE)
+            score_text = self.font.render(f"Score: {self.state.stash}", True, WHITE)
             score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
             self.screen.blit(score_text, score_rect)
             
@@ -175,31 +175,33 @@ class Game:
         # Check enemy collisions
         for enemy in self.enemies[:]:
             if player_rect.colliderect(enemy.get_rect()):
-                self.state.score -= 5  # <-- subtract 5 for hitting enemy
-                print(f"Hit enemy! Score: {self.state.score}")
+                if (self.state.stash>0):
+                    self.state.stash -= 1
+                print(f"Hit enemy! Score: {self.state.stash}")
                 self.enemies.remove(enemy)
         
         # Check collectible collisions
         for i in range(0,len(self.collectibles)):
             if i!=self.deactive_collectible_index and player_rect.colliderect(self.collectibles[i].get_rect()):
                 self.collectibles[i].collected = True
-                self.state.score += 10  # <-- add 10 for collectible
+                self.state.stash += 1  # <-- add 10 for collectible
+                self.player.speed-=10
                 for other in self.collectibles:
                     #if other!=self.collectibles[i]:
                     self.collectibles[i].collected=False
                 self.deactive_collectible_index=i
-                print(f"Collected! Score: {self.state.score}")
+                print(f"Collected! Red Bull: {self.state.stash}")
             
     def draw_ui(self):
         # --- Score display ---
-        score_text = self.font.render(f"Score: {self.state.score}", True, YELLOW)
+        score_text = self.font.render(f"Stash Size: {self.state.stash}", True, YELLOW)
         self.screen.blit(score_text, (10, 10))
         
         # --- Optional: show collectibles collected ---
         collected_count = sum(1 for c in self.collectibles if c.collected)
         total_collectibles = len(self.collectibles)
-        coll_text = self.small_font.render(f"Collectibles: {collected_count}/{total_collectibles}", True, WHITE)
-        self.screen.blit(coll_text, (10, 50))
+        #coll_text = self.small_font.render(f"Collectibles: {collected_count}/{total_collectibles}", True, WHITE)
+        #self.screen.blit(coll_text, (10, 50))
 
         timer_text = self.font.render(f"Time Left: {int(self.state.time_left)}s", True, CYAN)
         self.screen.blit(timer_text, (SCREEN_WIDTH - 250, 10))
@@ -216,7 +218,7 @@ class Game:
             collectible.collected = False
         self.state.game_over = False
         self.state.game_won = False
-        self.state.score = 0
+        self.state.stash = 0
         self.state.time_left = 10
     
     def clear(self):
