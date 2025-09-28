@@ -2,7 +2,7 @@ import pygame
 
 
 class Menu:
-    def __init__(self, screen, title, options=None, background_img=None, background_rect=None, coder_frames=None):
+    def __init__(self, screen, title, options=None, background_img=None, background_rect=None, coder_frames=None, high_score=None):
         self.screen = screen
         self.title = title
         self.options = options if options else ["Restart", "Quit"]
@@ -15,6 +15,7 @@ class Menu:
         self.coder_frame_idx = 0
         self.coder_anim_timer = 0
         self.coder_anim_speed = 0.10  # seconds per frame (faster typing)
+        self.high_score = high_score
 
     def draw(self):
         self.screen.fill((0, 0, 0))  # black background
@@ -43,11 +44,20 @@ class Menu:
             title_rect = title_surface.get_rect(center=(self.screen.get_width() // 2, 200))
             self.screen.blit(title_surface, title_rect)
 
+        # --- Draw high score if provided ---
+        y_offset = 0
+        if self.high_score is not None:
+            hs_font = pygame.font.Font(None, 56)
+            hs_text = hs_font.render(f"High Score: {self.high_score}", True, (255, 255, 0))
+            hs_rect = hs_text.get_rect(center=(self.screen.get_width() // 2, 340))
+            self.screen.blit(hs_text, hs_rect)
+            y_offset = 40
+
         # --- Draw menu options ---
         for i, option in enumerate(self.options):
             color = (255, 255, 0) if i == self.selected_index else (200, 200, 200)
             option_surface = self.font_option.render(option, True, color)
-            option_rect = option_surface.get_rect(center=(self.screen.get_width() // 2, 400 + i * 60))
+            option_rect = option_surface.get_rect(center=(self.screen.get_width() // 2, 400 + i * 60 + y_offset))
             self.screen.blit(option_surface, option_rect)
 
     def handle_input(self, event):

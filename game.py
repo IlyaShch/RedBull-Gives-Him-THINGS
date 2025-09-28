@@ -306,62 +306,43 @@ class Game:
         # Draw UI on top
         self.draw_ui()
         
-        # Draw game over overlay
+        # Draw game over overlay using Menu
         if self.state.game_over:
-            if self.state.stash > self.state.high_score:
-                self.state.high_score = self.state.stash
-            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-            overlay.set_alpha(200)  # semi-transparent black
-            overlay.fill(BLACK)
-            self.screen.blit(overlay, (0, 0))
-            
-            # Game over text
-            go_text = self.font.render("YOU LOSE", True, RED)
-            go_rect = go_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
-            self.screen.blit(go_text, go_rect)
-            
-            # Current score
-            score_text = self.font.render(f"Score: {self.state.stash}", True, WHITE)
-            score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
-            self.screen.blit(score_text, score_rect)
-            
-            # Highest score
-            high_text = self.font.render(f"High Score: {self.state.high_score}", True, YELLOW)
-            high_rect = high_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
-            self.screen.blit(high_text, high_rect)
-            
-            # Restart instructions
-            restart_text = self.small_font.render("Press R to Restart or ESC to Quit", True, WHITE)
-            restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 100))
-            self.screen.blit(restart_text, restart_rect)
-        
-        if self.state.win:
-            if self.state.stash > self.state.high_score:
-                self.state.high_score = self.state.stash
-            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-            overlay.set_alpha(200)  # semi-transparent black
-            overlay.fill(BLACK)
-            self.screen.blit(overlay, (0, 0))
-            
-            # Game over text
-            go_text = self.font.render("YOU WIN", True, RED)
-            go_rect = go_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
-            self.screen.blit(go_text, go_rect)
-            
-            # Current score
-            score_text = self.font.render(f"Score: {self.state.stash}", True, WHITE)
-            score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
-            self.screen.blit(score_text, score_rect)
-            
-            # Highest score
-            high_text = self.font.render(f"High Score: {self.state.high_score}", True, YELLOW)
-            high_rect = high_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
-            self.screen.blit(high_text, high_rect)
-            
-            # Restart instructions
-            restart_text = self.small_font.render("Press R to Restart or ESC to Quit", True, WHITE)
-            restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 100))
-            self.screen.blit(restart_text, restart_rect)
+            from Menu import Menu
+            # Use the same background and coder frames as main menu
+            title_img = pygame.image.load("Titile.png").convert_alpha()
+            scale_factor = 8.5
+            w, h = title_img.get_width(), title_img.get_height()
+            scaled_img = pygame.transform.scale(title_img, (int(w*scale_factor), int(h*scale_factor)))
+            img_rect = scaled_img.get_rect(center=(600, 250))
+            coder1 = pygame.image.load("coder1.png").convert_alpha()
+            coder2 = pygame.image.load("coder2.png").convert_alpha()
+            coder_scale = 8.5
+            coder1 = pygame.transform.scale(coder1, (int(coder1.get_width()*coder_scale), int(coder1.get_height()*coder_scale)))
+            coder2 = pygame.transform.scale(coder2, (int(coder2.get_width()*coder_scale), int(coder2.get_height()*coder_scale)))
+            coder_frames = [coder1, coder2]
+            # Show menu with high score and restart/quit
+            menu = Menu(self.screen, "", [f"High Score: {self.state.high_score}", "Restart", "Quit"], background_img=scaled_img, background_rect=img_rect, coder_frames=coder_frames)
+            menu.draw()
+            pygame.display.flip()
+            waiting = True
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    result = menu.handle_input(event)
+                    if result == "Restart":
+                        self.restart_game()
+                        waiting = False
+                        break
+                    elif result == "Quit":
+                        pygame.quit()
+                        sys.exit()
+                menu.draw()
+                pygame.display.flip()
+                self.clock.tick(FPS)
+
 
         pygame.display.flip()
     

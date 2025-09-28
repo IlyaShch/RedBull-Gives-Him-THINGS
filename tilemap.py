@@ -21,11 +21,14 @@ class TileMap:
         self.door1=None
         self.door2=None
 
+        # Load and directly darken floor tile by reducing brightness
+        floor_img = pygame.image.load("Floor Tile.png").convert_alpha()
+        floor_img = pygame.transform.scale(floor_img, (tile_size, tile_size))
+        arr = pygame.surfarray.pixels3d(floor_img)
+        arr[...] = (arr * 0.7).astype('uint8')  # reduce brightness to 70%
+        del arr
         self.tile_textures = {
-            '.': pygame.transform.scale(
-                pygame.image.load("Floor Tile.png").convert_alpha(),
-                (tile_size, tile_size)
-            ),
+            '.': floor_img,
             'D': pygame.transform.scale(
                 pygame.image.load("door.png").convert_alpha(),
                 (tile_size, tile_size),  # placeholder wall
