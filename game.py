@@ -62,13 +62,13 @@ class Game:
             "WZZ.............W..W....",
             "WZZ.............WW.W....",
             "........................",
+            "..........WW..........WW",
             "......................WW",
+            "....WW................WW",
             "......................WW",
-            "......................WW",
-            "......................WW",
-            "......................WW",
-            "......................WW",
-            "......................WW"
+            "........WWWW..........WW",
+            ".................W....WW",
+            "...............WWW....WW"
         ], tile_size=48)
 
         # self.tilemap2 = TileMap(layout=
@@ -341,12 +341,12 @@ class Game:
             self.screen.blit(go_text, go_rect)
             
             # Current score
-            score_text = self.font.render(f"Time: {self.state.time}", True, WHITE)
+            score_text = self.font.render(f"Time: {int(self.state.time)}", True, WHITE)
             score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
             self.screen.blit(score_text, score_rect)
             
             # Highest score
-            high_text = self.font.render(f"Best Time: {self.state.high_score}", True, YELLOW)
+            high_text = self.font.render(f"Best Time: {int(self.state.high_score)}", True, YELLOW)
             high_rect = high_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
             self.screen.blit(high_text, high_rect)
             
@@ -385,7 +385,7 @@ class Game:
                 if not collectible.collected and player_rect.colliderect(collectible.get_rect()):
                     collectible.collected = True
                     self.state.inventory += 1
-                    self.player.speed = 1.25 * self.player.speed  # speed boost on pickup
+                    #self.player.speed = 1.25 * self.player.speed  # speed boost on pickup
                     print(f"Collected! Red Bull: {self.state.inventory}, New speed: {self.player.speed}")
 
 
@@ -460,9 +460,9 @@ class Game:
     def run(self):
         while self.running:
                 dt = self.clock.tick(FPS) / 1000.0
-                self.state.time+=dt
                 self.handle_events()
                 if self.state.game_over==False and self.state.win==False:
+                    self.state.time+=dt
                     self.update(dt)
                 self.draw()
         pygame.quit()
