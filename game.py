@@ -33,8 +33,8 @@ class Game:
         self.clock = pygame.time.Clock()
         self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
         self.enemies = [
-            Enemy(100,100),
-            Enemy(1100, 100, image_paths=["dog.webp", "dog.webp"], scale=0.5, dialogue="woof", anim_speed=0.1),
+            #Enemy(100,100),
+            #Enemy(1100, 100, image_paths=["dog.webp", "dog.webp"], scale=0.5, dialogue="woof", anim_speed=0.1),
             Enemy(400, 400, image_paths=["kingjulian.png", "kingjulian.png"], scale=2.5, anim_speed=0.1),
             Enemy(300, 300, image_paths=["patel.png", "patel.png"], scale=2.5, anim_speed=0.1),
             Enemy(400, 400, image_paths=["bellas-1.png", "bellas-1.png"], scale=2.5, anim_speed=0.1)
@@ -50,103 +50,103 @@ class Game:
         self.deactive_collectible_index=-1
 
         #add the map class
-        self.tilemap1 = TileMap(layout=[
+        self.tilemap = TileMap(layout=[
             "WWWWWWWWWWWWWWWWWWWWWWWW",
-            "W....W.....EE....W......",
+            "W....W.....WW....W......",
             "W....W...........W......",
             "W..WWW...........WWW....",
             "W........WWWWW..........",
-            "W........W...W.........D",
-            "W........W..WW.........D",
+            "W........W...W.........W",
+            "W........W..WW.........W",
             "W...............WW.W....",
             "WZZ.............W..W....",
             "WZZ.............WW.W....",
             "........................",
+            "..........WW..........WW",
             "......................WW",
+            "....WW................WW",
             "......................WW",
-            "......................WW",
-            "......................WW",
-            "......................WW",
-            "......................WW",
-            "......................WW"
+            "........WWWW..........WW",
+            ".................W....WW",
+            "...............WWW....WW"
         ], tile_size=48)
 
-        self.tilemap2 = TileMap(layout=
-            [
-            "WWWWWWWWWWWWWWWWWWWWWWWW",
-            "W..................DD..W",
-            "W......................W",
-            "W......................W",
-            "WE.....................W",
-            "WE........W............W",
-            "W......................W",
-            "W......................W",
-            "W.............W........W",
-            "W..WW..................W",
-            "W......................W",
-            "W......................W",
-            "W......................W",
-            "W........W.............W",
-            "W......................W",
-            "W......................W",
-            "W......................W",
-            "WWWWWWWWWWWWWWWWWWWWWWWW"
-        ], tile_size=48)
+        # self.tilemap2 = TileMap(layout=
+        #     [
+        #     "WWWWWWWWWWWWWWWWWWWWWWWW",
+        #     "W..................DD..W",
+        #     "W......................W",
+        #     "W......................W",
+        #     "WE.....................W",
+        #     "WE........W............W",
+        #     "W......................W",
+        #     "W......................W",
+        #     "W.............W........W",
+        #     "W..WW..................W",
+        #     "W......................W",
+        #     "W......................W",
+        #     "W......................W",
+        #     "W........W.............W",
+        #     "W......................W",
+        #     "W......................W",
+        #     "W......................W",
+        #     "WWWWWWWWWWWWWWWWWWWWWWWW"
+        # ], tile_size=48)
 
-        self.tilemap3 = TileMap(layout=[
-            "WWWWWWWWWWWWWWWWWWWWWWWW",
-            "W.............W........W",
-            "W..WWW.............W...W",
-            "W..W.............W.....W",
-            "W..W........W....W.....W",
-            "W..W.............W.....W",
-            "W..WWW..WW..W.W..WWW...W",
-            "W......................W",
-            "WD..............WW.....W",
-            "WD...W..W......W..W....W",
-            "W....W..W......W..W....W",
-            "W...............WWW....W",
-            "W......................W",
-            "W..W....W......WWW.....W",
-            "W...........W........W.W",
-            "W...........W..........W",
-            "W.............W...EE...W",
-            "WWWWWWWWWWWWWWWWWWWWWWWW"
-        ], tile_size=48)
+        # self.tilemap3 = TileMap(layout=[
+        #     "WWWWWWWWWWWWWWWWWWWWWWWW",
+        #     "W.............W........W",
+        #     "W..WWW.............W...W",
+        #     "W..W.............W.....W",
+        #     "W..W........W....W.....W",
+        #     "W..W.............W.....W",
+        #     "W..WWW..WW..W.W..WWW...W",
+        #     "W......................W",
+        #     "WD..............WW.....W",
+        #     "WD...W..W......W..W....W",
+        #     "W....W..W......W..W....W",
+        #     "W...............WWW....W",
+        #     "W......................W",
+        #     "W..W....W......WWW.....W",
+        #     "W...........W........W.W",
+        #     "W...........W..........W",
+        #     "W.............W...EE...W",
+        #     "WWWWWWWWWWWWWWWWWWWWWWWW"
+        # ], tile_size=48)
 
-        self.tilemap4 = TileMap(layout=[
-            "WWWWWWWWWWWWWWWWWWWWWWWWW",
-            "W............WW.....W...W",
-            "W.............W.....W...W",
-            "W.............W....WWW..W",
-            "W..W...............W....W",
-            "W..W..............W......",
-            "W..W..............W......",
-            "W.............W.W......E.",
-            "W........W.............E.",
-            "W........W........W.W...W",
-            "W........W..........W...W",
-            "W....WWW......WWW.W.W...W",
-            "W................W.......",
-            "W..WWW..WWW........WWW..W",
-            "W..W........W..........W.",
-            "W..W........W..........W.",
-            "W.................DD.....",
-            "WWWWWWWWWWWWWWWWWWWWWWWWW"
-        ], tile_size=48)
+        # self.tilemap4 = TileMap(layout=[
+        #     "WWWWWWWWWWWWWWWWWWWWWWWWW",
+        #     "W............WW.....W...W",
+        #     "W.............W.....W...W",
+        #     "W.............W....WWW..W",
+        #     "W..W...............W....W",
+        #     "W..W..............W......",
+        #     "W..W..............W......",
+        #     "W.............W.W......E.",
+        #     "W........W.............E.",
+        #     "W........W........W.W...W",
+        #     "W........W..........W...W",
+        #     "W....WWW......WWW.W.W...W",
+        #     "W................W.......",
+        #     "W..WWW..WWW........WWW..W",
+        #     "W..W........W..........W.",
+        #     "W..W........W..........W.",
+        #     "W.................DD.....",
+        #     "WWWWWWWWWWWWWWWWWWWWWWWWW"
+        # ], tile_size=48)
 
-        self.tilemap1.add_target1(self.tilemap2)
-        self.tilemap2.add_target1(self.tilemap3)
-        self.tilemap3.add_target1(self.tilemap4)
-        self.tilemap4.add_target1(self.tilemap1)
+        # self.tilemap1.add_target1(self.tilemap2)
+        # self.tilemap2.add_target1(self.tilemap3)
+        # self.tilemap3.add_target1(self.tilemap4)
+        # self.tilemap4.add_target1(self.tilemap1)
 
-        self.tilemap1.add_target2(self.tilemap4)
-        self.tilemap2.add_target2(self.tilemap1)
-        self.tilemap3.add_target2(self.tilemap2)
-        self.tilemap4.add_target2(self.tilemap3)
+        # self.tilemap1.add_target2(self.tilemap4)
+        # self.tilemap2.add_target2(self.tilemap1)
+        # self.tilemap3.add_target2(self.tilemap2)
+        # self.tilemap4.add_target2(self.tilemap3)
 
-        # Start with the first map
-        self.tilemap = self.tilemap1
+        # # Start with the first map
+        # self.tilemap = self.tilemap1
 
         # Music handler: loop 'casual-panic_X7OnO11p.wav' forever
         self.music = MusicHandler("casual-panic_X7OnO11p.wav")
@@ -174,12 +174,6 @@ class Game:
             #    self.music.play_sound("drink")
 
     def update(self, dt):
-        if self.player is None:
-            print("[DEBUG] Player is None")
-        if self.collectibles is None:
-            print("[DEBUG] Collectibles is None")
-        if self.enemies is None:
-            print("[DEBUG] Enemies is None")
         keys = pygame.key.get_pressed()
         self.player.update(dt, keys)
         for entity in self.entities:
@@ -212,28 +206,28 @@ class Game:
 
                 # Sync player.x, player.y back to the rect center
                 self.player.x, self.player.y = self.player.rect.center
-        for i, door_rect in enumerate(self.tilemap.doors1):
-            if self.player.get_rect().colliderect(door_rect):
-                #if self.tilemap.door1:
-                self.tilemap = self.tilemap.door1
-                # Reset player to top-left
-                #self.player.x, self.player.y = 100, 100
-                #self.player.rect.center = (self.player.x, self.player.y)
-                #break
-                target_pos = self.tilemap.doors1_targets[i]  # same index
-                self.player.x, self.player.y = target_pos
-                self.player.rect.center = (self.player.x, self.player.y)
-                break
+        # for i, door_rect in enumerate(self.tilemap.doors1):
+        #     if self.player.get_rect().colliderect(door_rect):
+        #         #if self.tilemap.door1:
+        #         self.tilemap = self.tilemap.door1
+        #         # Reset player to top-left
+        #         #self.player.x, self.player.y = 100, 100
+        #         #self.player.rect.center = (self.player.x, self.player.y)
+        #         #break
+        #         target_pos = self.tilemap.doors1_targets[i]  # same index
+        #         self.player.x, self.player.y = target_pos
+        #         self.player.rect.center = (self.player.x, self.player.y)
+        #         break
         
-        for i, door_rect in enumerate(self.tilemap.doors2):
-            if self.player.get_rect().colliderect(door_rect):
-                #if self.tilemap.door1:
-                self.tilemap = self.tilemap.door2
-                # Reset player to top-left
-                target_pos = self.tilemap.doors2_targets[i]  # same index
-                self.player.x, self.player.y = target_pos
-                self.player.rect.center = (self.player.x, self.player.y)
-                break
+        # for i, door_rect in enumerate(self.tilemap.doors2):
+        #     if self.player.get_rect().colliderect(door_rect):
+        #         #if self.tilemap.door1:
+        #         self.tilemap = self.tilemap.door2
+        #         # Reset player to top-left
+        #         target_pos = self.tilemap.doors2_targets[i]  # same index
+        #         self.player.x, self.player.y = target_pos
+        #         self.player.rect.center = (self.player.x, self.player.y)
+        #         break
 
 
                     # --- NEW: dropzone interaction ---
@@ -273,6 +267,8 @@ class Game:
         if self.progress_blue.fullness>=1:
             self.state.time_left=0
             self.state.win=True
+            if self.state.time<self.state.best_time:
+                self.state.best_time=self.state.time
 
         if self.progress_yellow.fullness <=0:
             self.state.time_left = 0
@@ -358,6 +354,15 @@ class Game:
                     print(f"Hit enemy! Inventory: {self.state.inventory}")
                     self.enemies.remove(enemy)
                     print(self.enemies)
+        if len(self.enemies)==0:
+            self.enemies = [
+                #Enemy(100,100),
+                #Enemy(1100, 100, image_paths=["dog.webp", "dog.webp"], scale=0.5, dialogue="woof", anim_speed=0.1),
+                Enemy(400, 400, image_paths=["kingjulian.png", "kingjulian.png"], scale=2.5, anim_speed=0.1),
+                Enemy(300, 300, image_paths=["patel.png", "patel.png"], scale=2.5, anim_speed=0.1),
+                Enemy(400, 400, image_paths=["bellas-1.png", "bellas-1.png"], scale=2.5, anim_speed=0.1)
+            ]
+            self.randomize_enemies()
 
         # --- Collectible collisions ---
         if len(self.collectibles)>0:
@@ -365,7 +370,7 @@ class Game:
                 if not collectible.collected and player_rect.colliderect(collectible.get_rect()):
                     collectible.collected = True
                     self.state.inventory += 1
-                    self.player.speed = 1.25 * self.player.speed  # speed boost on pickup
+                    #self.player.speed = 1.25 * self.player.speed  # speed boost on pickup
                     print(f"Collected! Red Bull: {self.state.inventory}, New speed: {self.player.speed}")
 
 
@@ -402,8 +407,8 @@ class Game:
         #self.progress_blue.set_fullness(self.progress_blue.fullness)
         self.progress_blue.draw(self.screen)
 
-        timer_text = self.font.render(f"Time Left: {int(self.state.time_left)}s", True, CYAN)
-        self.screen.blit(timer_text, (SCREEN_WIDTH - 250, 10))
+        #timer_text = self.font.render(f"Time Left: {int(self.state.time_left)}s", True, CYAN)
+        #self.screen.blit(timer_text, (SCREEN_WIDTH - 250, 10))
 
             
     #def reset_collectibles(self, index):
@@ -413,7 +418,13 @@ class Game:
 
     def restart_game(self):
         self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
-        self.enemies = [Enemy(100, 100), Enemy(1100, 100)]
+        self.enemies = [
+                #Enemy(100,100),
+                #Enemy(1100, 100, image_paths=["dog.webp", "dog.webp"], scale=0.5, dialogue="woof", anim_speed=0.1),
+                Enemy(400, 400, image_paths=["kingjulian.png", "kingjulian.png"], scale=2.5, anim_speed=0.1),
+                Enemy(300, 300, image_paths=["patel.png", "patel.png"], scale=2.5, anim_speed=0.1),
+                Enemy(400, 400, image_paths=["bellas-1.png", "bellas-1.png"], scale=2.5, anim_speed=0.1)
+            ]
         for collectible in self.collectibles:
             collectible.collected = False
         self.state.game_over = False
@@ -424,7 +435,8 @@ class Game:
         self.randomize_collectibles()
         self.progress_blue.fullness=0
         self.progress_yellow.fullness=1
-        self.tilemap=self.tilemap1
+        #self.tilemap=self.tilemap1
+        self.state.time=0
     
     def clear(self):
         self.collectible=[]
@@ -432,10 +444,12 @@ class Game:
 
     def run(self):
         while self.running:
-            dt = self.clock.tick(FPS) / 1000.0
-            self.handle_events()
-            self.update(dt)
-            self.draw()
+                dt = self.clock.tick(FPS) / 1000.0
+                self.handle_events()
+                if self.state.game_over==False and self.state.win==False:
+                    self.state.time+=dt
+                    self.update(dt)
+                self.draw()
         pygame.quit()
         sys.exit()
 
@@ -455,19 +469,36 @@ class Game:
                     collectible.y = y
                     collectible.rect.center = (x, y)
                     break
+    
+    def randomize_enemies(self):
+        for enemy in self.enemies:
+            while True:
+                # Generate random coordinates within screen bounds
+                x = random.randint(enemy.rect.width // 2, SCREEN_WIDTH - enemy.rect.width // 2)
+                y = random.randint(enemy.rect.height // 2, SCREEN_HEIGHT - enemy.rect.height // 2)
+                
+                # Check collision with walls
+                rect = pygame.Rect(x - enemy.rect.width//2, y - enemy.rect.height//2,
+                                enemy.rect.width, enemy.rect.height)
+                if not any(rect.colliderect(wall) for wall in self.tilemap.walls):
+                    # Valid position found
+                    enemy.x = x
+                    enemy.y = y
+                    enemy.rect.center = (x, y)
+                    break
 
-    def get_entry_direction(player_rect, door_rect):
-        dx = (player_rect.centerx) - (door_rect.centerx)
-        dy = (player_rect.centery) - (door_rect.centery)
+    # def get_entry_direction(player_rect, door_rect):
+    #     dx = (player_rect.centerx) - (door_rect.centerx)
+    #     dy = (player_rect.centery) - (door_rect.centery)
 
-        # Compare absolute values to see which axis dominates
-        if abs(dx) > abs(dy):
-            if dx > 0:
-                return "right"   # player came from right
-            else:
-                return "left"    # player came from left
-        else:
-            if dy > 0:
-                return "bottom"  # player came from below
-            else:
-                return "top"     # player came from above
+    #     # Compare absolute values to see which axis dominates
+    #     if abs(dx) > abs(dy):
+    #         if dx > 0:
+    #             return "right"   # player came from right
+    #         else:
+    #             return "left"    # player came from left
+    #     else:
+    #         if dy > 0:
+    #             return "bottom"  # player came from below
+    #         else:
+    #             return "top"     # player came from above

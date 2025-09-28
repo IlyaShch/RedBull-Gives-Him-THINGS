@@ -8,3 +8,5 @@ class GameState:
         self.time_left=10
         self.high_score = 0
         self.inventory =0
+        self.time=0
+        self.best_time= 100000000
