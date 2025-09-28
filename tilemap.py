@@ -18,7 +18,8 @@ class TileMap:
         self.tile_size = tile_size
         # Your current layout here...
         self.layout = layout
-        self.door=None
+        self.door1=None
+        self.door2=None
 
         self._fit_to_screen()
         self._build_walls()
@@ -60,11 +61,17 @@ class TileMap:
                     self.dropzones.append(rect)
     
     def _build_doors(self):
-        self.doors=[]
+        self.doors1=[]
+        self.doors2=[]
         for r, row in enumerate(self.layout):
             for c, ch in enumerate(row):
                 if ch == 'D':
-                    self.doors.append(
+                    self.doors1.append(
+                        pygame.Rect(c*self.tile_size, r*self.tile_size,
+                                    self.tile_size, self.tile_size)
+                    )
+                if ch == 'E':
+                    self.doors2.append(
                         pygame.Rect(c*self.tile_size, r*self.tile_size,
                                     self.tile_size, self.tile_size)
                     )
@@ -83,7 +90,11 @@ class TileMap:
             pygame.draw.rect(screen, (85,85,100), rect)
             pygame.draw.rect(screen, (160,160,175), rect, 2)
 
-        for rect in self.doors:
+        for rect in self.doors1:
+            pygame.draw.rect(screen, (0, 0, 0), rect)
+            pygame.draw.rect(screen, (50, 50, 50), rect, 2)
+
+        for rect in self.doors2:
             pygame.draw.rect(screen, (0, 0, 0), rect)
             pygame.draw.rect(screen, (50, 50, 50), rect, 2)
 
@@ -92,5 +103,8 @@ class TileMap:
             pygame.draw.rect(screen, (0,200,200), rect)
             pygame.draw.rect(screen, (0,255,255), rect, 2)
 
-    def add_target(self, target_map):
-        self.door=target_map
+    def add_target1(self, target_map):
+        self.door1=target_map
+    
+    def add_target2(self, target_map):
+        self.door2=target_map
