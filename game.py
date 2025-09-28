@@ -267,6 +267,8 @@ class Game:
         if self.progress_blue.fullness>=1:
             self.state.time_left=0
             self.state.win=True
+            if self.state.time<self.state.best_time:
+                self.state.best_time=self.state.time
 
         if self.progress_yellow.fullness <=0:
             self.state.time_left = 0
@@ -302,8 +304,6 @@ class Game:
         
         # Draw game over overlay
         if self.state.game_over:
-            if self.state.stash > self.state.high_score:
-                self.state.high_score = self.state.stash
             overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
             overlay.set_alpha(200)  # semi-transparent black
             overlay.fill(BLACK)
@@ -314,15 +314,13 @@ class Game:
             go_rect = go_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
             self.screen.blit(go_text, go_rect)
             
-            # Current score
-            score_text = self.font.render(f"Score: {self.state.stash}", True, WHITE)
-            score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
-            self.screen.blit(score_text, score_rect)
-            
             # Highest score
-            high_text = self.font.render(f"High Score: {self.state.high_score}", True, YELLOW)
-            high_rect = high_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
-            self.screen.blit(high_text, high_rect)
+            #if self.state.high_score!=100000000:
+            #    high_text = self.font.render(f"Best Time: {self.state.high_score}", True, YELLOW)
+            #else:
+            #    high_text = self.font.render(f"Best Time: N/A", True, YELLOW)
+            #high_rect = high_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
+            #self.screen.blit(high_text, high_rect)
             
             # Restart instructions
             restart_text = self.small_font.render("Press R to Restart or ESC to Quit", True, WHITE)
@@ -343,12 +341,12 @@ class Game:
             self.screen.blit(go_text, go_rect)
             
             # Current score
-            score_text = self.font.render(f"Score: {self.state.stash}", True, WHITE)
+            score_text = self.font.render(f"Time: {self.state.time}", True, WHITE)
             score_rect = score_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
             self.screen.blit(score_text, score_rect)
             
             # Highest score
-            high_text = self.font.render(f"High Score: {self.state.high_score}", True, YELLOW)
+            high_text = self.font.render(f"Best Time: {self.state.high_score}", True, YELLOW)
             high_rect = high_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 50))
             self.screen.blit(high_text, high_rect)
             
@@ -435,7 +433,13 @@ class Game:
 
     def restart_game(self):
         self.player = Player(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
-        self.enemies = [Enemy(100, 100), Enemy(1100, 100)]
+        self.enemies = [
+                #Enemy(100,100),
+                #Enemy(1100, 100, image_paths=["dog.webp", "dog.webp"], scale=0.5, dialogue="woof", anim_speed=0.1),
+                Enemy(400, 400, image_paths=["kingjulian.png", "kingjulian.png"], scale=2.5, anim_speed=0.1),
+                Enemy(300, 300, image_paths=["patel.png", "patel.png"], scale=2.5, anim_speed=0.1),
+                Enemy(400, 400, image_paths=["bellas-1.png", "bellas-1.png"], scale=2.5, anim_speed=0.1)
+            ]
         for collectible in self.collectibles:
             collectible.collected = False
         self.state.game_over = False
@@ -447,6 +451,7 @@ class Game:
         self.progress_blue.fullness=0
         self.progress_yellow.fullness=1
         #self.tilemap=self.tilemap1
+        self.state.time=0
     
     def clear(self):
         self.collectible=[]
@@ -454,10 +459,12 @@ class Game:
 
     def run(self):
         while self.running:
-            dt = self.clock.tick(FPS) / 1000.0
-            self.handle_events()
-            self.update(dt)
-            self.draw()
+                dt = self.clock.tick(FPS) / 1000.0
+                self.state.time+=dt
+                self.handle_events()
+                if self.state.game_over==False and self.state.win==False:
+                    self.update(dt)
+                self.draw()
         pygame.quit()
         sys.exit()
 
